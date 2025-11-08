@@ -1,6 +1,7 @@
 package middelware
 
 import (
+	"back-end-coffeShop/models"
 	"os"
 	"strings"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func VerifToken() gin.HandlerFunc {
+func VerifRole(roles ...string) gin.HandlerFunc {
 	godotenv.Load()
 
 	var jwtToken = os.Getenv("JWT_TOKEN")
@@ -29,7 +30,27 @@ func VerifToken() gin.HandlerFunc {
 			return
 		}
 
-		ctx.Next()	
+		claims,_ := token.Claims.(jwt.MapClaims)
 
+		userRole,_ := claims["role"].(string)
+
+		allowed := false
+
+		for _, role := range roles {
+			if userRole == role {
+				allowed = true
+				break
+			}
+		}
+
+		if !allowed {
+			ctx.JSON(400, models.Response{
+				Success: false,
+				Message: "Error: Access role Denied",
+			})
+			ctx.Abort()
+			return 
+		}
+		ctx.Next()	
 	}
 }

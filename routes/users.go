@@ -12,7 +12,7 @@ func UsersRoutes(r *gin.RouterGroup, conn *pgx.Conn) {
 	userController := controller.UserController{Conn: conn}
 	users := r.Group("/users")
 	{
-		users.GET("/", middelware.VerifToken(), userController.GetUsers)
+		users.GET("/", middelware.VerifToken(), middelware.VerifRole("admin"), userController.GetUsers)
 	}
 	}
 	

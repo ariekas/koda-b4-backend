@@ -7,14 +7,14 @@ import (
 )
 
 type LoginClaims struct{
-	Foo string `json:"foo"`
+	Role  string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(JWTtoken string) (string, error){
+func GenerateToken(JWTtoken string, role string) (string, error){
 	claims := LoginClaims{
-		"bar",
-		jwt.RegisteredClaims{
+		Role: role,
+		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(2 * time.Hour)),
 			IssuedAt: jwt.NewNumericDate(time.Now()),
 		},
