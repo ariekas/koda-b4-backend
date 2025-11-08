@@ -38,3 +38,31 @@ func (pc ProductController) CreateProduct(ctx *gin.Context){
 		Data: product,
 	})
 }
+
+func (pc ProductController) EditProduct(ctx *gin.Context){
+	newProduct, err := respository.Edit(pc.Conn, ctx)
+
+	if err != nil {
+		if err.Error() == "product not found" {
+			ctx.JSON(404, models.Response{
+				Success: false,
+				Message: "Error : Product not found",
+				Data:    nil,
+			})
+			return
+		}
+
+		ctx.JSON(500, models.Response{
+			Success: false,
+			Message: "Failed to edit product",
+			Data:    nil,
+		})
+		return
+	}
+
+	ctx.JSON(201, models.Response{
+		Success: true,
+		Message: "Success edit product",
+		Data: newProduct,
+	})
+}

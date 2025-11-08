@@ -11,7 +11,7 @@ type Product struct{
 	Description string
 	Productsize string
 	Stock int
-	Isflashsale string
+	Isflashsale *bool
 	Tempelatur string
 	Category_productid int
 	Created_at time.Time
