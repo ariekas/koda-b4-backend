@@ -15,5 +15,6 @@ func ProductRoutes(r *gin.RouterGroup, conn *pgx.Conn){
 		products.GET("/", productController.GetProducts)
 		products.POST("/", productController.CreateProduct)
 		products.PATCH("/edit/:id", productController.EditProduct)
+		products.DELETE("/delete/:id", productController.DeleteProduct)
 	}
 }

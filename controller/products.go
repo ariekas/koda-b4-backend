@@ -66,3 +66,19 @@ func (pc ProductController) EditProduct(ctx *gin.Context){
 		Data: newProduct,
 	})
 }
+
+func (pc ProductController) DeleteProduct(ctx *gin.Context){
+	err := respository.Delete(pc.Conn, ctx)
+
+	if err != nil {
+		ctx.JSON(404, models.Response{
+			Success: false,
+			Message: "Error: Failed to get product",
+		})
+	}
+
+	ctx.JSON(201, models.Response{
+		Success: true,
+		Message: "Sucess deleted product",
+	})
+}

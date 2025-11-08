@@ -138,3 +138,11 @@ func Edit(conn *pgx.Conn, ctx *gin.Context) (models.Product, error) {
 
 	return newProduct, err
 }
+
+
+func Delete(conn *pgx.Conn, ctx *gin.Context) error {
+	id := ctx.Param("id")
+	_, err := conn.Exec(context.Background(), "DELETE FROM product WHERE id = $1", id)
+
+	return err
+}
