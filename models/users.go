@@ -1,7 +1,7 @@
 package models
 
 import (
-	"database/sql"
+	"time"
 )
 
 type User struct{
@@ -11,6 +11,7 @@ type User struct{
 	Password string `json:"password"`
 	Role string `json:"role"`
 	Profileid int `json:"profile_id"`
-	Created_at sql.NullTime `json:"created_at"`
-	Updated_at sql.NullTime `json:"updated_at"`
+	Token string
+	Created_at time.Time `json:"created_at"`
+	Updated_at time.Time `json:"updated_at"`
 }

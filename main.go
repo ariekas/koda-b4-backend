@@ -20,6 +20,7 @@ func main() {
 	r := gin.Default()
 
 	routes.UsersRoutes(&r.RouterGroup, connectDb)
+	routes.AuthRoutes(&r.RouterGroup, connectDb)
 
 	r.Run(":8080")
 
