@@ -8,9 +8,10 @@ import (
 )
 
 func AuthRoutes(r *gin.RouterGroup, conn *pgx.Conn){
-	authController := controller.AuthRegister{Conn: conn}
+	authController := controller.AuthController{Conn: conn}
 	auth := r.Group("/")
 	{
 		auth.POST("/register", authController.Register)
+		auth.POST("/login", authController.Login)
 	}
 }

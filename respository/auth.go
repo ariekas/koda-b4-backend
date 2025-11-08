@@ -4,6 +4,7 @@ import (
 	"back-end-coffeShop/models"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -39,4 +40,26 @@ func Register(ctx *gin.Context, conn *pgx.Conn) models.User {
 
 	
 	return input
+}
+
+func FindUserEmail(conn *pgx.Conn, email string) (models.User, error) {
+	var users models.User
+
+	row := conn.QueryRow(context.Background(), "SELECT id, fullname, email, password, role, profileId, created_at, updated_at FROM users WHERE email = $1", email)
+
+	err := row.Scan(&users.Id, &users.Fullname, &users.Email, &users.Password, &users.Role, &users.Profileid, &users.Created_at, &users.Updated_at)
+
+	users.Password = strings.TrimSpace(users.Password)
+
+	return users, err
+}
+
+func VerifPassword(inputPassword string, hashPassword string) bool {
+	ok, err := argon2.VerifyEncoded([]byte(hashPassword), []byte(inputPassword))
+
+	if err != nil {
+		fmt.Println("Error : Password not metmatch")
+	}
+
+	return ok
 }
