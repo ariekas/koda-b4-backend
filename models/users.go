@@ -4,14 +4,16 @@ import (
 	"time"
 )
 
-type User struct{
-	Id int `json:"id"`
-	Fullname string `json:"fullname"`
-	Email string `json:"email"`
-	Password string `json:"password"`
-	Role string `json:"role"`
-	Profileid int `json:"profile_id"`
-	Token string
-	Created_at time.Time `json:"created_at"`
-	Updated_at time.Time `json:"updated_at"`
+type User struct {
+	Id         int        `json:"id"`
+	Fullname   string     `json:"fullname"`
+	Email      string     `json:"email"`
+	Pic      *string    `json:"pic,omitempty"`
+	Phone      *string    `json:"phone,omitempty"`
+	Address    *string    `json:"address,omitempty"`
+	Password   string     `json:"password,omitempty"`
+	Role       string     `json:"role,omitempty"`
+	Profileid  *int       `json:"profileid,omitempty"`
+	Created_at *time.Time `json:"created_at,omitempty"`
+	Updated_at *time.Time `json:"updated_at,omitempty"`
 }

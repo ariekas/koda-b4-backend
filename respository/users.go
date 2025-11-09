@@ -11,9 +11,19 @@ import (
 
 func GetDataUsers(conn *pgx.Conn) ([]models.User, error) {
 	var dataUser []models.User
-	rows, err := conn.Query(context.Background(), `SELECT id, fullname, email,password, role, profileid, created_at, updated_at FROM users`)
+	rows, err := conn.Query(context.Background(), `SELECT 
+  u.id AS user_id,
+  u.fullname,
+  u.email,
+  p.pic,
+  p.phone,
+  p.address
+FROM users u
+LEFT JOIN profile p ON u.profileid = p.id
+ORDER BY u.id;
+`)
 	if err != nil {
-		fmt.Println("Error: Failed get data users")
+		fmt.Println("Error: Failed get data users", err)
 	}
 
 	for rows.Next() {
@@ -22,11 +32,9 @@ func GetDataUsers(conn *pgx.Conn) ([]models.User, error) {
 			&user.Id,
 			&user.Fullname,
 			&user.Email,
-			&user.Password,
-			&user.Role,
-			&user.Profileid,
-			&user.Created_at,
-			&user.Updated_at,
+			&user.Pic,
+			&user.Phone,	
+			&user.Address,
 		)
 		if err != nil {
 			fmt.Println("Error scanning user:", err)

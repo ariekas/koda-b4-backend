@@ -35,8 +35,8 @@ func Register(ctx *gin.Context, conn *pgx.Conn) models.User {
 	}
 
 	input.Password = string(hash)
-	input.Created_at = now
-	input.Updated_at = now
+	input.Created_at = &now
+	input.Updated_at = &now
 
 	
 	return input
