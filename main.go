@@ -22,6 +22,7 @@ func main() {
 	routes.UsersRoutes(&r.RouterGroup, connectDb)
 	routes.AuthRoutes(&r.RouterGroup, connectDb)
 	routes.ProductRoutes(&r.RouterGroup, connectDb)
+	routes.OrderRoutes(&r.RouterGroup, connectDb)
 
 	r.Run(":8080")
 
