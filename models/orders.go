@@ -9,12 +9,19 @@ type OrderItems struct {
 }
 
 type Order struct {
-	ID        int            `json:"id"`
-	CreatedAt *time.Time       `json:"created_at"`
-	Status    string         `json:"status"`
-	Total     float64        `json:"total"`
-	OrderItems  []OrderItems `json:"orderItems"`
+    ID           int
+    Status       string
+    Total        float64
+    UserFullname string
+    UserAddress  string
+    UserPhone    string
+    PaymentMethod string
+    DeliveryName string
+    OrderItems   []OrderItems
+	Created_at time.Time
+	Updated_at time.Time
 }
+
 
 var InputNewStatus struct{
 	Status string `json:"status"`
