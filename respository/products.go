@@ -4,6 +4,9 @@ import (
 	"back-end-coffeShop/models"
 	"context"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -144,5 +147,56 @@ func Delete(conn *pgx.Conn, ctx *gin.Context) error {
 	id := ctx.Param("id")
 	_, err := conn.Exec(context.Background(), "DELETE FROM product WHERE id = $1", id)
 
+	return err
+}
+
+func CreateImageProduct(conn *pgx.Conn, ctx *gin.Context, productId int, files []*multipart.FileHeader) ([]models.ImageProduct, error){
+	var inputImage []models.ImageProduct
+	now := time.Now()
+
+	for _, file := range files {
+		filePath := fmt.Sprintf("imagesProduct/%s", file.Filename)
+
+		err := os.MkdirAll("imagesProduct", os.ModePerm)
+		if err != nil {
+			fmt.Println("Error : Failed to create folder", err)
+		}
+
+		err = saveUploadedFile(file, filePath)
+		if err != nil{
+			fmt.Println("Error :", err)
+		}
+
+		_, err = conn.Exec(context.Background(), "INSERT INTO imageproduct (productid, image, created_at, updated_at) VALUES ($1, $2, $3, $4)", productId, filePath, now, now)
+
+		if err != nil {
+			fmt.Println("Error: Failed to create image prodct", err)
+		}
+
+		inputImage = append(inputImage, models.ImageProduct{
+			Productid: productId,
+			Image: filePath,
+			Created_at: now,
+			Updated_at: now,
+		})
+	}
+	return  inputImage, nil
+	
+}
+
+func saveUploadedFile(file *multipart.FileHeader, path string) error {
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	dst, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
 	return err
 }

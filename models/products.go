@@ -17,3 +17,11 @@ type Product struct{
 	Created_at time.Time `json:"creaed_at"`
 	Updated_at time.Time `json:"updated_at"`
 }
+
+type ImageProduct struct {
+	Id         int       `json:"id"`
+	Productid  int       `json:"productId"`
+	Image      string    `json:"image"`
+	Created_at time.Time `json:"created_at"`
+	Updated_at time.Time `json:"updated_at"`
+}

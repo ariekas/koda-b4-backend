@@ -3,6 +3,7 @@ package controller
 import (
 	"back-end-coffeShop/models"
 	"back-end-coffeShop/respository"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -80,5 +81,42 @@ func (pc ProductController) DeleteProduct(ctx *gin.Context){
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Sucess deleted product",
+	})
+}
+
+func (pc ProductController) CreateImageProduct(ctx *gin.Context){
+	id := ctx.Param("id")
+	productId, _ := strconv.Atoi(id)
+
+	from , err := ctx.MultipartForm()
+	if err != nil {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "Failed to read form data",
+		})
+		return
+	}
+
+	files := from.File["images"]
+	if len(files) == 0 {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "No image uploaded",
+		})
+		return
+	}
+
+	imageProduct, err := respository.CreateImageProduct(pc.Conn, ctx, productId, files)
+	if err != nil {
+		ctx.JSON(401, models.Response{
+			Success: false,
+			Message: "Error: Failed to create product image",
+		})
+	}
+
+	ctx.JSON(201, models.Response{
+		Success: true,
+		Message: "Success create image product",
+		Data: imageProduct,
 	})
 }
