@@ -2,6 +2,7 @@ package routes
 
 import (
 	"back-end-coffeShop/controller"
+	"back-end-coffeShop/lib/middelware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -12,9 +13,9 @@ func ProductRoutes(r *gin.RouterGroup, conn *pgx.Conn){
 
 	products := r.Group("/products")
 	{
-		products.GET("/", productController.GetProducts)
-		products.POST("/", productController.CreateProduct)
-		products.PATCH("/edit/:id", productController.EditProduct)
-		products.DELETE("/delete/:id", productController.DeleteProduct)
+		products.GET("/", middelware.VerifToken(), middelware.VerifRole("admin"), productController.GetProducts)
+		products.POST("/", middelware.VerifToken(), middelware.VerifRole("admin"), productController.CreateProduct)
+		products.PATCH("/edit/:id", middelware.VerifToken(), middelware.VerifRole("admin"), productController.EditProduct)
+		products.DELETE("/delete/:id", middelware.VerifToken(), middelware.VerifRole("admin"), productController.DeleteProduct)
 	}
 }

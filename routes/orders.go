@@ -2,6 +2,7 @@ package routes
 
 import (
 	"back-end-coffeShop/controller"
+	"back-end-coffeShop/lib/middelware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -12,7 +13,7 @@ func OrderRoutes(r *gin.RouterGroup, conn *pgx.Conn){
 
 	orders := r.Group("/orders")
 	{
-		orders.GET("/", OrdersController.GetOrders)
-		orders.PATCH("/update/status/:id", OrdersController.UpdateStatus)
+		orders.GET("/", middelware.VerifToken(), middelware.VerifRole("admin"), OrdersController.GetOrders)
+		orders.PATCH("/update/status/:id",middelware.VerifToken(), middelware.VerifRole("admin"), OrdersController.UpdateStatus)
 	}
 }
