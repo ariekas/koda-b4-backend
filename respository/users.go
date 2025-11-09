@@ -51,3 +51,13 @@ func DeleteUser(conn *pgx.Conn, ctx *gin.Context) error {
 
 	return err
 }
+
+func UpdateRole(conn *pgx.Conn, ctx *gin.Context, userId int, newRole string) error {
+	_, err := conn.Exec(context.Background(), "UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2", newRole, userId)
+
+	if err != nil {
+		fmt.Println("Error: Failed to update role user ",err)
+	}
+
+	return nil
+}

@@ -50,6 +50,7 @@ func (oc OrdersController) UpdateStatus(ctx *gin.Context){
 	if err != nil {
 		ctx.JSON(401, models.Response{
 			Success: false,
+			Message: "Error: Failed to update status order",
 		})
 	}
 
