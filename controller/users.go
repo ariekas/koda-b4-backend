@@ -29,3 +29,19 @@ func (uc UserController) GetUsers(ctx *gin.Context){
 	})
 }
 
+func (uc UserController) DeleteUser(ctx *gin.Context){
+	err := respository.DeleteUser(uc.Conn, ctx)
+
+	if err != nil {
+		ctx.JSON(401, models.Response{
+			Success: false,
+			Message: "Error: Failed to delete user",
+		})
+	}
+
+	ctx.JSON(201, models.Response{
+		Success: true,
+		Message: "Success deleted",
+	})
+}
+

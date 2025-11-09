@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type OrderProduct struct {
+type OrderItems struct {
 	ProductName string  `json:"product_name"`
 	Quantity    int     `json:"quantity"`
 	Subtotal    float64 `json:"subtotal"`
@@ -13,7 +13,7 @@ type Order struct {
 	CreatedAt *time.Time       `json:"created_at"`
 	Status    string         `json:"status"`
 	Total     float64        `json:"total"`
-	OrderItems  []OrderProduct `json:"orderItems"`
+	OrderItems  []OrderItems `json:"orderItems"`
 }
 
 var InputNewStatus struct{

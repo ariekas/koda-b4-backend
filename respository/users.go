@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -34,4 +35,11 @@ func GetDataUsers(conn *pgx.Conn) ([]models.User, error) {
 	}
 
 	return dataUser, nil
+}
+
+func DeleteUser(conn *pgx.Conn, ctx *gin.Context) error {
+	id := ctx.Param("id")
+	_, err := conn.Exec(context.Background(), "DELETE FROM users WHERE id = $1", id)
+
+	return err
 }
