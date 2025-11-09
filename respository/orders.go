@@ -55,3 +55,13 @@ ORDER BY o.id;
 
 	return orders, nil
 }
+
+func UpdateStatus(conn *pgx.Conn, orderId int, newStatus string) error{
+	_, err := conn.Exec(context.Background(), "UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2", newStatus, orderId)
+	
+	if err != nil {
+		fmt.Println("Error updating order status:", err)
+	}
+
+	return nil
+}

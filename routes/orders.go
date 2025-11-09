@@ -13,5 +13,6 @@ func OrderRoutes(r *gin.RouterGroup, conn *pgx.Conn){
 	orders := r.Group("/orders")
 	{
 		orders.GET("/", OrdersController.GetOrders)
+		orders.PATCH("/update/status/:id", OrdersController.UpdateStatus)
 	}
 }

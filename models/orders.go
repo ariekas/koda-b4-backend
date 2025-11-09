@@ -15,3 +15,7 @@ type Order struct {
 	Total     float64        `json:"total"`
 	OrderItems  []OrderProduct `json:"orderItems"`
 }
+
+var InputNewStatus struct{
+	Status string `json:"status"`
+}
