@@ -21,3 +21,19 @@ type User struct {
 var InputNewRole struct{
 	Role string `json:"role"`
 }
+
+type InputNewRoleUser struct {
+	Role string `json:"role" example:"admin" binding:"required"`
+}
+
+type RegisterRequest struct {
+	Fullname string `json:"fullname" example:"John Doe"`
+	Email    string `json:"email" example:"john@example.com"`
+	Password string `json:"password" example:"123456"`
+	Role     string `json:"role" example:"customer"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email" example:"john@example.com"`
+	Password string `json:"password" example:"123456"`
+}

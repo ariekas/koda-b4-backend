@@ -16,6 +16,16 @@ type AuthController struct {
 	Conn *pgx.Conn
 }
 
+// Register godoc
+// @Summary Register a new user
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param request body models.RegisterRequest true "User registration data"
+// @Success 201 {object} models.Response "Success register"
+// @Failure 400 {object} models.Response "Bad request"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /register [post]
 func (ac AuthController) Register(ctx *gin.Context) {
 	user := respository.Register(ctx, ac.Conn)
 
@@ -26,6 +36,17 @@ func (ac AuthController) Register(ctx *gin.Context) {
 	})
 }
 
+// Login godoc
+// @Summary Login user
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param request body models.LoginRequest true "Login credentials"
+// @Success 201 {object} models.Response "Login success"
+// @Failure 401 {object} models.Response "Wrong password"
+// @Failure 404 {object} models.Response "User not found"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /login [post]
 func (ac AuthController) Login(ctx *gin.Context) {
 	var loginData struct {
 		Email    string `json:"email"`
