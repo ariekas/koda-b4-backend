@@ -24,5 +24,5 @@ type Order struct {
 }
 
 type InputNewStatus struct {
-	Status string `json:"status" example:"completed"`
+	Status string `json:"status" example:"completed" binding:"required,oneof=pending processing completed cancelled"`
 }

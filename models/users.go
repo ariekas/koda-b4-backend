@@ -23,19 +23,19 @@ var InputNewRole struct{
 }
 
 type InputNewRoleUser struct {
-	Role string `json:"role" example:"admin" binding:"required"`
+	Role string `json:"role" example:"admin" binding:"required,oneof=admin user"`
 }
 
 type RegisterRequest struct {
-	Fullname string `json:"fullname" example:"John Doe"`
-	Email    string `json:"email" example:"john@example.com"`
-	Password string `json:"password" example:"123456"`
-	Role     string `json:"role" example:"customer"`
+	Fullname string `json:"fullname" example:"John Doe" binding:"required,min=3,max=100"`
+	Email    string `json:"email" example:"john@example.com" binding:"required,email"`
+	Password string `json:"password" example:"123456" binding:"required,min=6"`
+	Role     string `json:"role" example:"customer" binding:"required,oneof=admin user"`
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" example:"john@example.com"`
-	Password string `json:"password" example:"123456"`
+	Email    string `json:"email" example:"john@example.com" binding:"required,email"`
+	Password string `json:"password" example:"123456" binding:"required,min=6"`
 }
 
 type LoginResponse struct {
