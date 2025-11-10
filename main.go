@@ -36,6 +36,7 @@ func main() {
 	routes.AuthRoutes(&r.RouterGroup, connectDb)
 	routes.ProductRoutes(&r.RouterGroup, connectDb)
 	routes.OrderRoutes(&r.RouterGroup, connectDb)
+	routes.CategoryProductRoutes(&r.RouterGroup, connectDb)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.Run(":8080")

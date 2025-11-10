@@ -23,7 +23,6 @@ func GetDataUsers(pool *pgxpool.Pool, page int) (PaginationResponseUser, error) 
 	limit := 50
 	offset := (page - 1) * limit
 
-	// Hitung total user
 	var total int
 	err := pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM users").Scan(&total)
 	if err != nil {

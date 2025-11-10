@@ -73,7 +73,7 @@ func GetProducts(pool *pgxpool.Pool, page int) (PaginationResponse, error) {
 	if page > 1 {
 		links["prev"] = fmt.Sprintf("/products?page=%d", page-1)
 	} else {
-		links["prev"] = "null"
+		links["prev"] = "nul"
 	}
 
 	if page < totalPages {
@@ -109,8 +109,8 @@ func Create(ctx *gin.Context, pool *pgxpool.Pool) models.Product {
 		fmt.Println("Error insert product:", err)
 	}
 
-	// input.Created_at = now
-	// input.Updated_at = now
+	input.Created_at = now
+	input.Updated_at = now
 
 	return input
 }
