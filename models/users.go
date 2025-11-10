@@ -37,3 +37,12 @@ type LoginRequest struct {
 	Email    string `json:"email" example:"john@example.com"`
 	Password string `json:"password" example:"123456"`
 }
+
+type LoginResponse struct {
+	Token string `json:"token"`
+}
+
+var OtpForget = make(map[string]struct {
+	Code      string
+	ExpiresAt time.Time
+})

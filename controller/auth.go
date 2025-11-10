@@ -6,6 +6,7 @@ import (
 	"back-end-coffeShop/models"
 	"back-end-coffeShop/respository"
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -82,10 +83,53 @@ func (ac AuthController) Login(ctx *gin.Context) {
 		fmt.Println("Error: Failed to generate token")
 	} 
 
+
+	loginResponse := models.LoginResponse{
+		Token: token,
+	}
 	
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Login success",
-		Data: fmt.Sprintf("Token Login : %s", token),
+		Data: loginResponse,
 	})
+}
+
+func (ac AuthController) ForgetPassword(ctx *gin.Context){
+	var Input struct{
+		Email string `json:"email"`
+	}
+
+	err := ctx.BindJSON(&Input)
+
+	if err != nil {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "Invalid JSON",
+		})
+		return
+	}
+
+	_, err = respository.FindUserEmail(ac.Pool, Input.Email)
+	if err != nil {
+		ctx.JSON(404, models.Response{
+			Success: false,
+			Message: "Email not found",
+		})
+		return
+	}
+
+	otp := fmt.Sprintf("%05d", time.Now().UnixNano()%1000000)
+	timeExp := time.Now().Add(5 * time.Minute)
+
+	models.OtpForget[Input.Email] = struct {
+		Code string; 
+		ExpiresAt time.Time
+		}{Code: otp, ExpiresAt: timeExp}
+
+		ctx.JSON(200, models.Response{
+			Success: true,
+			Message: "OTP has been sent to your email",
+			Data: otp,
+		})
 }

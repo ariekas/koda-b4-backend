@@ -13,5 +13,6 @@ func AuthRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
 	{
 		auth.POST("/register", authController.Register)
 		auth.POST("/login", authController.Login)
+		auth.POST("/forgot-password", authController.ForgetPassword)
 	}
 }
