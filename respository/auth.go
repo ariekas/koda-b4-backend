@@ -38,7 +38,6 @@ func Register(ctx *gin.Context, pool *pgxpool.Pool) models.User {
 	input.Created_at = &now
 	input.Updated_at = &now
 
-	
 	return input
 }
 
@@ -62,4 +61,21 @@ func VerifPassword(inputPassword string, hashPassword string) bool {
 	}
 
 	return ok
+}
+
+func UpdatePassword(pool *pgxpool.Pool, email string, newPassword string) error{
+	argon := argon2.DefaultConfig()
+	hash, err := argon.HashEncoded([]byte(newPassword))
+	if err != nil {
+		fmt.Println("Failed to hash password", err)
+
+	}
+
+	_, err = pool.Exec(context.Background(), "UPDATE users SET password = $1, updated_at=$2 WHERE email=$3", hash, time.Now(), email)
+
+	if err != nil {
+		fmt.Println("Error updating password:", err)
+	}
+	
+	return nil
 }

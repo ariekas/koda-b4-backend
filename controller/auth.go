@@ -133,3 +133,77 @@ func (ac AuthController) ForgetPassword(ctx *gin.Context){
 			Data: otp,
 		})
 }
+
+func (ac AuthController) VerifCodeOtp(ctx *gin.Context){
+	var Input struct {
+		Email string `json:"email"`
+		OTP   string `json:"otp"`
+	}
+
+	err := ctx.BindJSON(&Input)
+
+	if err != nil {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "Invalid JSON",
+		})
+		return
+	}
+
+	otp, exists := models.OtpForget[Input.Email]
+	if !exists {
+		ctx.JSON(404, models.Response{
+			Success: false,
+			Message: "OTP not found or expired",
+		})
+		return
+	}
+
+	if time.Now().After(otp.ExpiresAt) {
+		delete(models.OtpForget, Input.Email)
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "OTP expired",
+		})
+		return
+	}
+
+	if otp.Code != Input.OTP {
+		ctx.JSON(401, models.Response{
+			Success: false,
+			Message: "Invalid OTP",
+		})
+		return
+	}
+
+	ctx.JSON(200, models.Response{
+		Success: true,
+		Message: "OTP verified successfully",
+	})
+}
+
+func (ac AuthController) CreateNewPassword(ctx *gin.Context){
+	var Input struct{
+		Email       string `json:"email"`
+		NewPassword string `json:"new_password"`
+	}
+
+	err := ctx.BindJSON(&Input)
+	if err != nil {
+		fmt.Println("Error Failed type request", err)
+	}
+
+	err = respository.UpdatePassword(ac.Pool, Input.Email, Input.NewPassword)
+	if err != nil {
+		ctx.JSON(500, models.Response{
+			Success: false,
+			Message: "Failed to update password",
+		})
+		return
+	}
+
+	ctx.JSON(200, models.Response{
+		Success: true,
+		Message: "Password updated successfully",
+	})
+}
