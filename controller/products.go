@@ -201,3 +201,22 @@ func (pc ProductController) GetAllImageProduct(ctx *gin.Context){
 		Data:    images,
 	})
 }
+
+func (pc ProductController) DeleteImageProduct(ctx *gin.Context){
+	id := ctx.Param("id")
+	imageId, _ := strconv.Atoi(id)
+
+	err := respository.DeleteImageProduct(pc.Pool, imageId)
+	if err != nil {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "Failed delete image product",
+		})
+		return
+	}
+
+	ctx.JSON(200, models.Response{
+		Success: true,
+		Message: "Success delete image product",
+	})
+}

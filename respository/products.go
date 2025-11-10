@@ -265,6 +265,27 @@ func GetAllImageProduct(pool *pgxpool.Pool) ([]models.ImageProduct, error) {
 	return images, nil
 }
 
+func DeleteImageProduct(pool *pgxpool.Pool, id int) error{
+	var imagePath string
+
+	err := pool.QueryRow(context.Background(), "SELECT image FROM imageproduct WHERE id = $1", id).Scan(&imagePath)
+	if err != nil {
+		fmt.Println("image not found:", err)
+	}
+
+	err = os.Remove(imagePath)
+	if err != nil {
+		fmt.Println("Error: Failed to delete image:", err)
+	}
+
+	_, err = pool.Exec(context.Background(), "DELETE FROM imageproduct WHERE id = $1", id)
+	if err != nil {
+		fmt.Println("failed to delete image product:", err)
+	}
+
+	return nil
+}
+
 
 func saveUploadedFile(file *multipart.FileHeader, path string) error {
 	src, err := file.Open()

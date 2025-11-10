@@ -19,5 +19,6 @@ func ProductRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
 		products.DELETE("/:id", middelware.VerifToken(), middelware.VerifRole("admin"), productController.DeleteProduct)
 		products.POST("/image/:id", productController.CreateImageProduct)
 		products.GET("/images", productController.GetAllImageProduct)
+		products.DELETE("/image/:id", productController.DeleteImageProduct)
 	}
 }
