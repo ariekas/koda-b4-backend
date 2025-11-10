@@ -244,6 +244,28 @@ func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, fil
 	return inputImage, nil
 }
 
+func GetAllImageProduct(pool *pgxpool.Pool) ([]models.ImageProduct, error) {
+	var images []models.ImageProduct
+
+	rows, err := pool.Query(context.Background(), "SELECT id, productid, image, created_at, updated_at  FROM imageproduct ORDER BY id ASC")
+
+	if err != nil {
+		fmt.Println("Error : Failed to get all image product", err)
+	}
+
+	for rows.Next() {
+		var img models.ImageProduct
+		err := rows.Scan(&img.Id, &img.Productid, &img.Image, &img.Created_at, &img.Updated_at)
+		if err != nil {
+			fmt.Println("Error scanning image product:", err)
+		}
+		images = append(images, img)
+	}
+
+	return images, nil
+}
+
+
 func saveUploadedFile(file *multipart.FileHeader, path string) error {
 	src, err := file.Open()
 	if err != nil {

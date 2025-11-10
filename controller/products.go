@@ -183,3 +183,21 @@ func (pc ProductController) CreateImageProduct(ctx *gin.Context){
 		Data: imageProduct,
 	})
 }
+
+func (pc ProductController) GetAllImageProduct(ctx *gin.Context){
+	images, err := respository.GetAllImageProduct(pc.Pool)
+
+	if err != nil {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "Failed to get image products",
+		})
+		return
+	}
+
+	ctx.JSON(200, models.Response{
+		Success: true,
+		Message: "Success get all image products",
+		Data:    images,
+	})
+}
