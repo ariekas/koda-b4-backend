@@ -2,13 +2,15 @@ package main
 
 import (
 	"back-end-coffeShop/controller"
+	"back-end-coffeShop/lib/middelware"
 	"back-end-coffeShop/routes"
 	"fmt"
 
+	_ "back-end-coffeShop/docs"
+
+	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "back-end-coffeShop/docs" 
-	"github.com/gin-gonic/gin"
 )
 
 // @securityDefinitions.apikey BearerAuth
@@ -26,6 +28,10 @@ func main() {
 	connectDb := controller.ConnectDB()
 	r := gin.Default()
 
+	r.MaxMultipartMemory = 8 << 20
+	r.Use(middelware.CrossMiddelware)
+	r.Use(middelware.AllowPreflight)
+	
 	routes.UsersRoutes(&r.RouterGroup, connectDb)
 	routes.AuthRoutes(&r.RouterGroup, connectDb)
 	routes.ProductRoutes(&r.RouterGroup, connectDb)

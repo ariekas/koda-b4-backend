@@ -20,3 +20,11 @@ func ReadEnvDb() string {
 
 	return DbUrl
 }
+
+func ReadEnvUrl() string{
+	godotenv.Load()
+
+	url := os.Getenv("ORIGIN_URL")
+
+	return url
+}
