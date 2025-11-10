@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -14,8 +15,8 @@ type Product struct{
 	Isflashsale *bool `json:"isFlashsale"`
 	Tempelatur string `json:"tempelatur"`
 	Category_productid int `json:"category_productId"`
-	Created_at time.Time `json:"creaed_at"`
-	Updated_at time.Time `json:"updated_at"`
+	Created_at sql.NullString `json:"creaed_at"`
+	Updated_at sql.NullString `json:"updated_at"`
 }
 
 type ProductInput struct {

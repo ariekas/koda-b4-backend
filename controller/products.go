@@ -23,7 +23,16 @@ type ProductController struct{
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products [get]
 func (pc ProductController) GetProducts(ctx *gin.Context){
-	produts, err := respository.GetProducts(pc.Pool)
+	pageQuery := ctx.Query("page")
+	page := 1
+	if pageQuery != "" {
+		p, err := strconv.Atoi(pageQuery)
+		if err == nil && p > 0 {
+			page = p
+		}
+	}
+	
+	produts, err := respository.GetProducts(pc.Pool,page )
 
 	if err != nil {
 		ctx.JSON(401, models.Response{

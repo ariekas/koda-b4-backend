@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -15,11 +16,32 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetProducts(pool *pgxpool.Pool) ([]models.Product, error) {
+type PaginationResponse struct {
+	Data       []models.Product  `json:"data"`
+	Page       int               `json:"page"`
+	Limit      int               `json:"limit"`
+	Total      int               `json:"total"`
+	TotalPages int               `json:"total_pages"`
+	Links      map[string]string `json:"links"`
+}
+
+func GetProducts(pool *pgxpool.Pool, page int) (PaginationResponse, error) {
 	var dataProduct []models.Product
+	limit := 50
+	offset := (page - 1) * limit
 
-	rows, err := pool.Query(context.Background(), "SELECT id, name, price, description, productsize, stock, isflashsale, tempelatur, category_productid, created_at, updated_at FROM product")
+	var total int
+	err := pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM product").Scan(&total)
+	if err != nil {
+		fmt.Println("Error counting products:", err)
+	}
 
+	rows, err := pool.Query(context.Background(), `
+	SELECT id, name, price, description, productsize, stock, isflashsale, tempelatur, category_productid, created_at, updated_at 
+	FROM product 
+	ORDER BY id 
+	OFFSET $1 LIMIT $2
+`, offset, limit)
 	if err != nil {
 		fmt.Println("Error: Failed get data product")
 	}
@@ -45,7 +67,29 @@ func GetProducts(pool *pgxpool.Pool) ([]models.Product, error) {
 		dataProduct = append(dataProduct, product)
 	}
 
-	return dataProduct, nil
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+	links := make(map[string]string)
+
+	if page > 1 {
+		links["prev"] = fmt.Sprintf("/products?page=%d", page-1)
+	} else {
+		links["prev"] = "null"
+	}
+
+	if page < totalPages {
+		links["next"] = fmt.Sprintf("/products?page=%d", page+1)
+	}
+
+	response := PaginationResponse{
+		Data:       dataProduct,
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: totalPages,
+		Links:      links,
+	}
+
+	return response, nil
 }
 
 func Create(ctx *gin.Context, pool *pgxpool.Pool) models.Product {
@@ -65,8 +109,8 @@ func Create(ctx *gin.Context, pool *pgxpool.Pool) models.Product {
 		fmt.Println("Error insert product:", err)
 	}
 
-	input.Created_at = now
-	input.Updated_at = now
+	// input.Created_at = now
+	// input.Updated_at = now
 
 	return input
 }
@@ -144,7 +188,6 @@ func Edit(pool *pgxpool.Pool, ctx *gin.Context) (models.Product, error) {
 	return newProduct, err
 }
 
-
 func Delete(pool *pgxpool.Pool, ctx *gin.Context) error {
 	id := ctx.Param("id")
 	_, err := pool.Exec(context.Background(), "DELETE FROM product WHERE id = $1", id)
@@ -152,7 +195,7 @@ func Delete(pool *pgxpool.Pool, ctx *gin.Context) error {
 	return err
 }
 
-func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, files []*multipart.FileHeader) ([]models.ImageProduct, error){
+func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, files []*multipart.FileHeader) ([]models.ImageProduct, error) {
 	var inputImage []models.ImageProduct
 	now := time.Now()
 	maxSize := int64(5 * 1024 * 1024)
@@ -165,12 +208,12 @@ func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, fil
 
 	for _, file := range files {
 		if file.Size > maxSize {
-		 	fmt.Printf("file %s melebihi ukuran maksimum 5MB", file.Filename)
+			fmt.Printf("file %s melebihi ukuran maksimum 5MB", file.Filename)
 		}
 
 		ext := strings.ToLower(filepath.Ext(file.Filename))
 		if !allowedTypes[ext] {
-		 	fmt.Printf("file %s bukan tipe gambar yang diizinkan (hanya jpg, jpeg, png, webp)", file.Filename)
+			fmt.Printf("file %s bukan tipe gambar yang diizinkan (hanya jpg, jpeg, png, webp)", file.Filename)
 		}
 
 		err := os.MkdirAll("imagesProduct", os.ModePerm)
@@ -181,7 +224,7 @@ func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, fil
 		filePath := fmt.Sprintf("imagesProduct/%s", file.Filename)
 
 		err = saveUploadedFile(file, filePath)
-		if err != nil{
+		if err != nil {
 			fmt.Println("Error :", err)
 		}
 
@@ -192,13 +235,13 @@ func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, fil
 		}
 
 		inputImage = append(inputImage, models.ImageProduct{
-			Productid: productId,
-			Image: filePath,
+			Productid:  productId,
+			Image:      filePath,
 			Created_at: now,
 			Updated_at: now,
 		})
 	}
-	return  inputImage, nil
+	return inputImage, nil
 }
 
 func saveUploadedFile(file *multipart.FileHeader, path string) error {
