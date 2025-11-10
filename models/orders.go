@@ -1,28 +1,26 @@
 package models
 
 import "time"
-
 type OrderItems struct {
-	ProductName string  `json:"product_name"`
-	Quantity    int     `json:"quantity"`
-	Subtotal    float64 `json:"subtotal"`
+	ProductName string  `json:"product_name" example:"Latte"`
+	Quantity    int     `json:"quantity" example:"2"`
+	Subtotal    float64 `json:"subtotal" example:"50000"`
 }
 
 type Order struct {
-    ID           int
-    Status       string
-    Total        float64
-    UserFullname string
-    UserAddress  string
-    UserPhone    string
-    PaymentMethod string
-    DeliveryName string
-    OrderItems   []OrderItems
-	Created_at time.Time
-	Updated_at time.Time
+	ID            int          `json:"id"`
+	Status        string       `json:"status" example:"paid"`
+	Total         float64      `json:"total" example:"100000"`
+	UserFullname  string       `json:"user_fullname" example:"Ari Eka Saputra"`
+	UserAddress   string       `json:"user_address" example:"Jl. Sudirman No. 10"`
+	UserPhone     string       `json:"user_phone" example:"08123456789"`
+	PaymentMethod string       `json:"payment_method" example:"Cash"`
+	DeliveryName  string       `json:"delivery_name" example:"Gojek"`
+	OrderItems    []OrderItems `json:"order_items"`
+	CreatedAt     time.Time    `json:"created_at" example:"2025-11-10T10:00:00Z"`
+	UpdatedAt     time.Time    `json:"updated_at" example:"2025-11-10T10:00:00Z"`
 }
 
-
-var InputNewStatus struct{
-	Status string `json:"status"`
+type InputNewStatus struct {
+	Status string `json:"status" example:"completed"`
 }

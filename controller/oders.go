@@ -10,12 +10,20 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type OrdersController struct{
+type OrdersController struct {
 	Conn *pgx.Conn
 }
 
-func (oc OrdersController) GetOrders(ctx *gin.Context){
-	order, err  := respository.GetOrders(oc.Conn)
+// GetOrders godoc
+// @Summary Get all orders
+// @Tags Orders
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} models.Response
+// @Failure 401 {object} models.Response
+// @Router /orders [get]
+func (oc OrdersController) GetOrders(ctx *gin.Context) {
+	order, err := respository.GetOrders(oc.Conn)
 
 	if err != nil {
 		ctx.JSON(401, models.Response{
@@ -27,11 +35,22 @@ func (oc OrdersController) GetOrders(ctx *gin.Context){
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "SUccess getting data orders",
-		Data: order,
+		Data:    order,
 	})
 }
 
-func (oc OrdersController) UpdateStatus(ctx *gin.Context){
+// UpdateStatus godoc
+// @Summary Update status order
+// @Tags Orders
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Order ID"
+// @Param request body models.InputNewStatus true "New Status Data"
+// @Success 200 {object} models.Response
+// @Failure 401 {object} models.Response
+// @Router /orders/update/status/{id} [patch]
+func (oc OrdersController) UpdateStatus(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	// CONVERT STRING KE INT
@@ -40,12 +59,13 @@ func (oc OrdersController) UpdateStatus(ctx *gin.Context){
 		fmt.Println("Error : failed to converd type data")
 	}
 
-	err = ctx.ShouldBindJSON(&models.InputNewStatus)
+	var input models.InputNewStatus
+	err = ctx.ShouldBindJSON(&input)
 
 	if err != nil {
 		fmt.Println("Error: ", err)
 	}
-	err = respository.UpdateStatus(oc.Conn, orderId , models.InputNewStatus.Status)
+	err = respository.UpdateStatus(oc.Conn, orderId, input.Status)
 
 	if err != nil {
 		ctx.JSON(401, models.Response{
