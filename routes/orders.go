@@ -14,6 +14,7 @@ func OrderRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
 	orders := r.Group("/orders")
 	{
 		orders.GET("/", middelware.VerifToken(), middelware.VerifRole("admin"), OrdersController.GetOrders)
+		orders.GET("/:id", middelware.VerifToken(), middelware.VerifRole("admin"), OrdersController.GetById)
 		orders.PATCH("/status/:id",middelware.VerifToken(), middelware.VerifRole("admin"), OrdersController.UpdateStatus)
 	}
 }

@@ -39,12 +39,34 @@ func (oc OrdersController) GetOrders(ctx *gin.Context) {
 			Success: false,
 			Message: "Error: Failed to getting orders",
 		})
+		return
 	}
 
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "SUccess getting data orders",
 		Data:    order,
+	})
+}
+
+func (oc OrdersController) GetById(ctx *gin.Context){
+	id := ctx.Param("id")
+	orderId, _ := strconv.Atoi(id)
+
+	order, err := respository.GetOrderById(oc.Pool, orderId)
+
+	if err != nil {
+		ctx.JSON(401, models.Response{
+			Success: false,
+			Message: "Error getting order ",
+		})
+		return
+	}
+
+	ctx.JSON(201, models.Response{
+		Success: true,
+		Message: "Success getting data order",
+		Data: order,
 	})
 }
 
