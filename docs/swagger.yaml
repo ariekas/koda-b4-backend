@@ -154,7 +154,7 @@ paths:
       summary: Get all orders
       tags:
       - Orders
-  /orders/update/status/{id}:
+  /orders/status/{id}:
     patch:
       consumes:
       - application/json
@@ -234,42 +234,7 @@ paths:
       summary: Create a new product
       tags:
       - Products
-  /products/{id}/create/image:
-    post:
-      consumes:
-      - multipart/form-data
-      parameters:
-      - description: Product ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Upload product images
-        in: formData
-        name: images
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Success create image product
-          schema:
-            $ref: '#/definitions/models.Response'
-        "400":
-          description: Failed to upload image
-          schema:
-            $ref: '#/definitions/models.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/models.Response'
-      security:
-      - BearerAuth: []
-      summary: Upload product images
-      tags:
-      - Products
-  /products/delete/{id}:
+  /products/{id}:
     delete:
       parameters:
       - description: Product ID
@@ -297,7 +262,6 @@ paths:
       summary: Delete product
       tags:
       - Products
-  /products/edit/{id}:
     patch:
       consumes:
       - application/json
@@ -331,6 +295,41 @@ paths:
       security:
       - BearerAuth: []
       summary: Edit product
+      tags:
+      - Products
+  /products/image/{id}:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Upload product images
+        in: formData
+        name: images
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Success create image product
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Failed to upload image
+          schema:
+            $ref: '#/definitions/models.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - BearerAuth: []
+      summary: Upload product images
       tags:
       - Products
   /register:
@@ -391,7 +390,7 @@ paths:
       summary: Get all users
       tags:
       - Users
-  /users/delete/{id}:
+  /users/{id}:
     delete:
       parameters:
       - description: User ID
@@ -419,7 +418,7 @@ paths:
       summary: Delete a user
       tags:
       - Users
-  /users/update/role/{id}:
+  /users/role/{id}:
     patch:
       consumes:
       - application/json
