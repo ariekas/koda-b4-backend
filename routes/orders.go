@@ -9,7 +9,7 @@ import (
 )
 
 func OrderRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
-	OrdersController := controller.OrdersController{Pool: *pool}
+	OrdersController := controller.OrdersController{Pool: pool}
 
 	orders := r.Group("/orders")
 	{

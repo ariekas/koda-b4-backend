@@ -11,7 +11,7 @@ import (
 )
 
 type OrdersController struct {
-	Pool pgxpool.Pool
+	Pool *pgxpool.Pool
 }
 
 // GetOrders godoc
@@ -23,7 +23,16 @@ type OrdersController struct {
 // @Failure 401 {object} models.Response
 // @Router /orders [get]
 func (oc OrdersController) GetOrders(ctx *gin.Context) {
-	order, err := respository.GetOrders(&oc.Pool)
+	pageQuery := ctx.Query("page")
+	page := 1
+	if pageQuery != "" {
+		p, err := strconv.Atoi(pageQuery)
+		if err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	order, err := respository.GetOrders(oc.Pool, page)
 
 	if err != nil {
 		ctx.JSON(401, models.Response{
@@ -65,7 +74,7 @@ func (oc OrdersController) UpdateStatus(ctx *gin.Context) {
 	if err != nil {
 		fmt.Println("Error: ", err)
 	}
-	err = respository.UpdateStatus(&oc.Pool, orderId, input.Status)
+	err = respository.UpdateStatus(oc.Pool, orderId, input.Status)
 
 	if err != nil {
 		ctx.JSON(401, models.Response{

@@ -5,46 +5,65 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetOrders(pool *pgxpool.Pool) ([]models.Order, error) {
+type PaginationResponseOrder struct {
+	Data       []models.Order   `json:"data"`
+	Page       int              `json:"page"`
+	Limit      int              `json:"limit"`
+	Total      int              `json:"total"`
+	TotalPages int              `json:"total_pages"`
+	Links      map[string]string `json:"links"`
+}
+
+func GetOrders(pool *pgxpool.Pool, page int) (PaginationResponseOrder, error) {
 	var orders []models.Order
+	limit := 50
+	offset := (page - 1) * limit
+
+	var total int
+	err := pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM orders").Scan(&total)
+	if err != nil {
+		fmt.Println("Error counting orders:", err)
+	}
+
 	rows, err := pool.Query(context.Background(), `
 	SELECT
-  o.id AS order_id,
-  o.status,
-  o.total,
-  u.fullname AS user_fullname,
-  pr.address AS user_address,
-  pr.phone AS user_phone,
-  o.paymentmethod,
-  d.type AS delivery_name,
-  json_agg(
-    json_build_object(
-      'product_name', p.name,
-      'quantity', oi.quantity,
-      'subtotal', oi.subtotal
-    )
-  ) FILTER (WHERE oi.id IS NOT NULL) AS products
-FROM orders o
-LEFT JOIN orderitems oi ON o.id = oi.orderid
-LEFT JOIN product p ON p.id = oi.productid
-LEFT JOIN users u ON u.id = o.userid
-LEFT JOIN profile pr ON pr.id = u.profileid
-LEFT JOIN delivery d ON d.orderid = o.id
-GROUP BY 
-  o.id, 
-  o.status, 
-  o.total,
-  u.fullname,
-  pr.address,
-  pr.phone,
-  o.paymentmethod,
-  d.type
-ORDER BY o.id;
-`)
+	  o.id AS order_id,
+	  o.status,
+	  o.total,
+	  u.fullname AS user_fullname,
+	  pr.address AS user_address,
+	  pr.phone AS user_phone,
+	  o.paymentmethod,
+	  d.type AS delivery_name,
+	  json_agg(
+		json_build_object(
+		  'product_name', p.name,
+		  'quantity', oi.quantity,
+		  'subtotal', oi.subtotal
+		)
+	  ) FILTER (WHERE oi.id IS NOT NULL) AS products
+	FROM orders o
+	LEFT JOIN orderitems oi ON o.id = oi.orderid
+	LEFT JOIN product p ON p.id = oi.productid
+	LEFT JOIN users u ON u.id = o.userid
+	LEFT JOIN profile pr ON pr.id = u.profileid
+	LEFT JOIN delivery d ON d.orderid = o.id
+	GROUP BY 
+	  o.id, 
+	  o.status, 
+	  o.total,
+	  u.fullname,
+	  pr.address,
+	  pr.phone,
+	  o.paymentmethod,
+	  d.type
+	ORDER BY o.id OFFSET $1 LIMIT $2
+	`, offset, limit)
 
 	if err != nil {
 		fmt.Println("Error: Failed get data orders", err)
@@ -73,7 +92,29 @@ ORDER BY o.id;
 		orders = append(orders, o)
 	}
 
-	return orders, nil
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+	links := make(map[string]string)
+
+	if page > 1 {
+		links["prev"] = fmt.Sprintf("/products?page=%d", page-1)
+	} else {
+		links["prev"] = "null"
+	}
+
+	if page < totalPages {
+		links["next"] = fmt.Sprintf("/products?page=%d", page+1)
+	}
+
+	response := PaginationResponseOrder{
+		Data:       orders,
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: totalPages,
+		Links:      links,
+	}
+
+	return response, nil
 }
 
 func UpdateStatus(pool *pgxpool.Pool, orderId int, newStatus string) error {
