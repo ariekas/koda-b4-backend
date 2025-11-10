@@ -24,7 +24,16 @@ type UserController struct{
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /users [get]
 func (uc UserController) GetUsers(ctx *gin.Context){
-	users, err := respository.GetDataUsers(uc.Pool)
+	pageQuery := ctx.Query("page")
+	page := 1
+	if pageQuery != "" {
+		p, err := strconv.Atoi(pageQuery)
+		if err == nil && p > 0 {
+			page = p
+		}
+	}
+	
+	users, err := respository.GetDataUsers(uc.Pool, page)
 
 	if err != nil {
 		ctx.JSON(400, models.Response{
