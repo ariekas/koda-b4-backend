@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/matthewhartstonge/argon2"
 )
 
-func Register(ctx *gin.Context, conn *pgx.Conn) models.User {
+func Register(ctx *gin.Context, pool *pgxpool.Pool) models.User {
 	var input models.User
 	argon := argon2.DefaultConfig()
 
@@ -28,7 +28,7 @@ func Register(ctx *gin.Context, conn *pgx.Conn) models.User {
 
 	now := time.Now()
 
-	_, err = conn.Exec(context.Background(), "INSERT INTO users (fullname, email, password, role, profileId, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)", input.Fullname, input.Email, hash, input.Role, input.Profileid, now, now)
+	_, err = pool.Exec(context.Background(), "INSERT INTO users (fullname, email, password, role, profileId, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)", input.Fullname, input.Email, hash, input.Role, input.Profileid, now, now)
 
 	if err != nil {
 		fmt.Println("Error insert user:", err)
@@ -42,10 +42,10 @@ func Register(ctx *gin.Context, conn *pgx.Conn) models.User {
 	return input
 }
 
-func FindUserEmail(conn *pgx.Conn, email string) (models.User, error) {
+func FindUserEmail(pool *pgxpool.Pool, email string) (models.User, error) {
 	var users models.User
 
-	row := conn.QueryRow(context.Background(), "SELECT id, fullname, email, password, role, profileId, created_at, updated_at FROM users WHERE email = $1", email)
+	row := pool.QueryRow(context.Background(), "SELECT id, fullname, email, password, role, profileId, created_at, updated_at FROM users WHERE email = $1", email)
 
 	err := row.Scan(&users.Id, &users.Fullname, &users.Email, &users.Password, &users.Role, &users.Profileid, &users.Created_at, &users.Updated_at)
 

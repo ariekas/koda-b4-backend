@@ -6,12 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetOrders(conn *pgx.Conn) ([]models.Order, error) {
+func GetOrders(pool *pgxpool.Pool) ([]models.Order, error) {
 	var orders []models.Order
-	rows, err := conn.Query(context.Background(), `
+	rows, err := pool.Query(context.Background(), `
 	SELECT
   o.id AS order_id,
   o.status,
@@ -76,8 +76,8 @@ ORDER BY o.id;
 	return orders, nil
 }
 
-func UpdateStatus(conn *pgx.Conn, orderId int, newStatus string) error {
-	_, err := conn.Exec(context.Background(), "UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2", newStatus, orderId)
+func UpdateStatus(pool *pgxpool.Pool, orderId int, newStatus string) error {
+	_, err := pool.Exec(context.Background(), "UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2", newStatus, orderId)
 
 	if err != nil {
 		fmt.Println("Error updating order status:", err)

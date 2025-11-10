@@ -7,11 +7,11 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type OrdersController struct {
-	Conn *pgx.Conn
+	Pool pgxpool.Pool
 }
 
 // GetOrders godoc
@@ -23,7 +23,7 @@ type OrdersController struct {
 // @Failure 401 {object} models.Response
 // @Router /orders [get]
 func (oc OrdersController) GetOrders(ctx *gin.Context) {
-	order, err := respository.GetOrders(oc.Conn)
+	order, err := respository.GetOrders(&oc.Pool)
 
 	if err != nil {
 		ctx.JSON(401, models.Response{
@@ -65,7 +65,7 @@ func (oc OrdersController) UpdateStatus(ctx *gin.Context) {
 	if err != nil {
 		fmt.Println("Error: ", err)
 	}
-	err = respository.UpdateStatus(oc.Conn, orderId, input.Status)
+	err = respository.UpdateStatus(&oc.Pool, orderId, input.Status)
 
 	if err != nil {
 		ctx.JSON(401, models.Response{

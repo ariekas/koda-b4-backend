@@ -5,11 +5,11 @@ import (
 	"back-end-coffeShop/lib/middelware"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func ProductRoutes(r *gin.RouterGroup, conn *pgx.Conn){
-	productController := controller.ProductController{Conn: conn}
+func ProductRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
+	productController := controller.ProductController{Pool: pool}
 
 	products := r.Group("/products")
 	{

@@ -4,17 +4,17 @@ import (
 	"back-end-coffeShop/lib/config"
 	"context"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func ConnectDB() *pgx.Conn{
+func ConnectDB() *pgxpool.Pool{
 	dbURL:= config.ReadEnvDb()
 
-	conn, err := pgx.Connect(context.Background(), dbURL)
+	pool, err := pgxpool.New(context.Background(), dbURL)
 
 	if err != nil {
 		panic("Error : Failed to connect database")
 	}
 
-	return conn
+	return pool
 }

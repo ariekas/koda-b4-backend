@@ -7,11 +7,11 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UserController struct{
-	Conn *pgx.Conn
+	Pool *pgxpool.Pool
 }
 
 // GetUsers godoc
@@ -24,7 +24,7 @@ type UserController struct{
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /users [get]
 func (uc UserController) GetUsers(ctx *gin.Context){
-	users, err := respository.GetDataUsers(uc.Conn)
+	users, err := respository.GetDataUsers(uc.Pool)
 
 	if err != nil {
 		ctx.JSON(400, models.Response{
@@ -52,7 +52,7 @@ func (uc UserController) GetUsers(ctx *gin.Context){
 // @Failure 404 {object} models.Response "User not found"
 // @Router /users/{id} [delete]
 func (uc UserController) DeleteUser(ctx *gin.Context){
-	err := respository.DeleteUser(uc.Conn, ctx)
+	err := respository.DeleteUser(uc.Pool, ctx)
 
 	if err != nil {
 		ctx.JSON(401, models.Response{
@@ -94,7 +94,7 @@ func (uc UserController) UpdateRole(ctx *gin.Context){
 		fmt.Println("Error: ", err)
 	}
 
-	err = respository.UpdateRole(uc.Conn,ctx, userId, models. InputNewRole.Role)
+	err = respository.UpdateRole(uc.Pool,ctx, userId, models. InputNewRole.Role)
 
 	if err != nil {
 		ctx.JSON(401, models.Response{

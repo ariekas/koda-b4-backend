@@ -6,11 +6,11 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type ProductController struct{
-	Conn *pgx.Conn
+	Pool *pgxpool.Pool
 }
 
 
@@ -23,7 +23,7 @@ type ProductController struct{
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products [get]
 func (pc ProductController) GetProducts(ctx *gin.Context){
-	produts, err := respository.GetProducts(pc.Conn)
+	produts, err := respository.GetProducts(pc.Pool)
 
 	if err != nil {
 		ctx.JSON(401, models.Response{
@@ -51,7 +51,7 @@ func (pc ProductController) GetProducts(ctx *gin.Context){
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products [post]
 func (pc ProductController) CreateProduct(ctx *gin.Context){
-	product := respository.Create(ctx, pc.Conn)
+	product := respository.Create(ctx, pc.Pool)
 
 	ctx.JSON(201, models.Response{
 		Success: true,
@@ -73,7 +73,7 @@ func (pc ProductController) CreateProduct(ctx *gin.Context){
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products/{id} [patch]
 func (pc ProductController) EditProduct(ctx *gin.Context){
-	newProduct, err := respository.Edit(pc.Conn, ctx)
+	newProduct, err := respository.Edit(pc.Pool, ctx)
 
 	if err != nil {
 		if err.Error() == "product not found" {
@@ -111,7 +111,7 @@ func (pc ProductController) EditProduct(ctx *gin.Context){
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products/{id} [delete]
 func (pc ProductController) DeleteProduct(ctx *gin.Context){
-	err := respository.Delete(pc.Conn, ctx)
+	err := respository.Delete(pc.Pool, ctx)
 
 	if err != nil {
 		ctx.JSON(404, models.Response{
@@ -160,7 +160,7 @@ func (pc ProductController) CreateImageProduct(ctx *gin.Context){
 		return
 	}
 
-	imageProduct, err := respository.CreateImageProduct(pc.Conn, ctx, productId, files)
+	imageProduct, err := respository.CreateImageProduct(pc.Pool, ctx, productId, files)
 	if err != nil {
 		ctx.JSON(401, models.Response{
 			Success: false,

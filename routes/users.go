@@ -5,11 +5,11 @@ import (
 	"back-end-coffeShop/lib/middelware"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func UsersRoutes(r *gin.RouterGroup, conn *pgx.Conn) {
-	userController := controller.UserController{Conn: conn}
+func UsersRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
+	userController := controller.UserController{Pool: pool}
 	users := r.Group("/users")
 	{
 		users.GET("/", middelware.VerifToken(), middelware.VerifRole("admin"), userController.GetUsers)

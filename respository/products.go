@@ -10,13 +10,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetProducts(conn *pgx.Conn) ([]models.Product, error) {
+func GetProducts(pool *pgxpool.Pool) ([]models.Product, error) {
 	var dataProduct []models.Product
 
-	rows, err := conn.Query(context.Background(), "SELECT id, name, price, description, productsize, stock, isflashsale, tempelatur, category_productid, created_at, updated_at FROM product")
+	rows, err := pool.Query(context.Background(), "SELECT id, name, price, description, productsize, stock, isflashsale, tempelatur, category_productid, created_at, updated_at FROM product")
 
 	if err != nil {
 		fmt.Println("Error: Failed get data product")
@@ -46,7 +46,7 @@ func GetProducts(conn *pgx.Conn) ([]models.Product, error) {
 	return dataProduct, nil
 }
 
-func Create(ctx *gin.Context, conn *pgx.Conn) models.Product {
+func Create(ctx *gin.Context, pool *pgxpool.Pool) models.Product {
 	var input models.Product
 
 	err := ctx.BindJSON(&input)
@@ -57,7 +57,7 @@ func Create(ctx *gin.Context, conn *pgx.Conn) models.Product {
 
 	now := time.Now()
 
-	_, err = conn.Exec(context.Background(), "INSERT INTO product (name, price, description, productsize, stock, isflashsale, tempelatur, category_productid, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", input.Name, input.Price, input.Description, input.Productsize, input.Stock, input.Isflashsale, input.Tempelatur, input.Category_productid, now, now)
+	_, err = pool.Exec(context.Background(), "INSERT INTO product (name, price, description, productsize, stock, isflashsale, tempelatur, category_productid, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", input.Name, input.Price, input.Description, input.Productsize, input.Stock, input.Isflashsale, input.Tempelatur, input.Category_productid, now, now)
 
 	if err != nil {
 		fmt.Println("Error insert product:", err)
@@ -69,12 +69,12 @@ func Create(ctx *gin.Context, conn *pgx.Conn) models.Product {
 	return input
 }
 
-func GetById(ctx *gin.Context, conn *pgx.Conn) (models.Product, error) {
+func GetById(ctx *gin.Context, pool *pgxpool.Pool) (models.Product, error) {
 	id := ctx.Param("id")
 
 	var product models.Product
 
-	err := conn.QueryRow(context.Background(), `
+	err := pool.QueryRow(context.Background(), `
 		SELECT id, name, price, description, productsize, stock, isflashsale, tempelatur, category_productid, created_at, updated_at
 		FROM product WHERE id = $1
 	`, id).Scan(
@@ -94,10 +94,10 @@ func GetById(ctx *gin.Context, conn *pgx.Conn) (models.Product, error) {
 	return product, err
 }
 
-func Edit(conn *pgx.Conn, ctx *gin.Context) (models.Product, error) {
+func Edit(pool *pgxpool.Pool, ctx *gin.Context) (models.Product, error) {
 	id := ctx.Param("id")
 
-	oldProduct, err := GetById(ctx, conn)
+	oldProduct, err := GetById(ctx, pool)
 
 	if err != nil {
 		return models.Product{}, fmt.Errorf("product not found")
@@ -136,21 +136,21 @@ func Edit(conn *pgx.Conn, ctx *gin.Context) (models.Product, error) {
 		newProduct.Category_productid = oldProduct.Category_productid
 	}
 
-	_, err = conn.Exec(context.Background(), "UPDATE product SET name=$1, price=$2, description=$3, productsize=$4, stock=$5, isflashsale=$6, tempelatur=$7, category_productid=$8, updated_at=NOW() WHERE id = $9", newProduct.Name, newProduct.Price, newProduct.Description, newProduct.Productsize,
+	_, err = pool.Exec(context.Background(), "UPDATE product SET name=$1, price=$2, description=$3, productsize=$4, stock=$5, isflashsale=$6, tempelatur=$7, category_productid=$8, updated_at=NOW() WHERE id = $9", newProduct.Name, newProduct.Price, newProduct.Description, newProduct.Productsize,
 		newProduct.Stock, *newProduct.Isflashsale, newProduct.Tempelatur, newProduct.Category_productid, id)
 
 	return newProduct, err
 }
 
 
-func Delete(conn *pgx.Conn, ctx *gin.Context) error {
+func Delete(pool *pgxpool.Pool, ctx *gin.Context) error {
 	id := ctx.Param("id")
-	_, err := conn.Exec(context.Background(), "DELETE FROM product WHERE id = $1", id)
+	_, err := pool.Exec(context.Background(), "DELETE FROM product WHERE id = $1", id)
 
 	return err
 }
 
-func CreateImageProduct(conn *pgx.Conn, ctx *gin.Context, productId int, files []*multipart.FileHeader) ([]models.ImageProduct, error){
+func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, files []*multipart.FileHeader) ([]models.ImageProduct, error){
 	var inputImage []models.ImageProduct
 	now := time.Now()
 
@@ -167,7 +167,7 @@ func CreateImageProduct(conn *pgx.Conn, ctx *gin.Context, productId int, files [
 			fmt.Println("Error :", err)
 		}
 
-		_, err = conn.Exec(context.Background(), "INSERT INTO imageproduct (productid, image, created_at, updated_at) VALUES ($1, $2, $3, $4)", productId, filePath, now, now)
+		_, err = pool.Exec(context.Background(), "INSERT INTO imageproduct (productid, image, created_at, updated_at) VALUES ($1, $2, $3, $4)", productId, filePath, now, now)
 
 		if err != nil {
 			fmt.Println("Error: Failed to create image prodct", err)

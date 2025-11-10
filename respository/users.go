@@ -6,12 +6,12 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetDataUsers(conn *pgx.Conn) ([]models.User, error) {
+func GetDataUsers(pool *pgxpool.Pool) ([]models.User, error) {
 	var dataUser []models.User
-	rows, err := conn.Query(context.Background(), `SELECT 
+	rows, err := pool.Query(context.Background(), `SELECT 
   u.id AS user_id,
   u.fullname,
   u.email,
@@ -45,15 +45,15 @@ ORDER BY u.id;
 	return dataUser, nil
 }
 
-func DeleteUser(conn *pgx.Conn, ctx *gin.Context) error {
+func DeleteUser(pool *pgxpool.Pool, ctx *gin.Context) error {
 	id := ctx.Param("id")
-	_, err := conn.Exec(context.Background(), "DELETE FROM users WHERE id = $1", id)
+	_, err := pool.Exec(context.Background(), "DELETE FROM users WHERE id = $1", id)
 
 	return err
 }
 
-func UpdateRole(conn *pgx.Conn, ctx *gin.Context, userId int, newRole string) error {
-	_, err := conn.Exec(context.Background(), "UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2", newRole, userId)
+func UpdateRole(pool *pgxpool.Pool, ctx *gin.Context, userId int, newRole string) error {
+	_, err := pool.Exec(context.Background(), "UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2", newRole, userId)
 
 	if err != nil {
 		fmt.Println("Error: Failed to update role user ",err)

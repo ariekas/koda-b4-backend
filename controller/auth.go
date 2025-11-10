@@ -8,11 +8,11 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type AuthController struct {
-	Conn *pgx.Conn
+	Pool *pgxpool.Pool
 }
 
 // Register godoc
@@ -26,7 +26,7 @@ type AuthController struct {
 // @Failure 500 {object} models.Response "Internal server error"
 // @Router /register [post]
 func (ac AuthController) Register(ctx *gin.Context) {
-	user := respository.Register(ctx, ac.Conn)
+	user := respository.Register(ctx, ac.Pool)
 
 	ctx.JSON(201, models.Response{
 		Success: true,
@@ -59,7 +59,7 @@ func (ac AuthController) Login(ctx *gin.Context) {
 		fmt.Println("Error : Failed type much json")
 	}
 
-	users, err := respository.FindUserEmail(ac.Conn, loginData.Email)
+	users, err := respository.FindUserEmail(ac.Pool, loginData.Email)
 
 	if err != nil {
 		ctx.JSON(404, models.Response{
