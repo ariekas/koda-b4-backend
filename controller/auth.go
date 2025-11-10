@@ -1,15 +1,14 @@
 package controller
 
 import (
+	"back-end-coffeShop/lib/config"
 	"back-end-coffeShop/lib/middelware"
 	"back-end-coffeShop/models"
 	"back-end-coffeShop/respository"
 	"fmt"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
-	"github.com/joho/godotenv"
 )
 
 type AuthController struct {
@@ -54,8 +53,7 @@ func (ac AuthController) Login(ctx *gin.Context) {
 	}
 
 	err := ctx.BindJSON(&loginData)
-	godotenv.Load()
-	JWTtoken  := os.Getenv("JWT_TOKEN")
+	jwtToken := config.ReadENV()
 
 	if err != nil {
 		fmt.Println("Error : Failed type much json")
@@ -79,7 +77,7 @@ func (ac AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
-	token, err := middelware.GenerateToken(JWTtoken, users.Role)
+	token, err := middelware.GenerateToken(jwtToken, users.Role)
 	if err != nil {
 		fmt.Println("Error: Failed to generate token")
 	} 

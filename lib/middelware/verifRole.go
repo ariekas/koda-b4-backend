@@ -1,19 +1,16 @@
 package middelware
 
 import (
+	"back-end-coffeShop/lib/config"
 	"back-end-coffeShop/models"
-	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 )
 
 func VerifRole(roles ...string) gin.HandlerFunc {
-	godotenv.Load()
-
-	var jwtToken = os.Getenv("JWT_TOKEN")
+	jwtToken := config.ReadENV()
 
 	return func(ctx *gin.Context)  {
 		authHeader := ctx.Request.Header.Get("Authorization")

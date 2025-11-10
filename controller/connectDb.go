@@ -1,17 +1,14 @@
 package controller
 
 import (
+	"back-end-coffeShop/lib/config"
 	"context"
-	"os"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/joho/godotenv"
 )
 
 func ConnectDB() *pgx.Conn{
-	godotenv.Load()
-
-	dbURL := os.Getenv("DATABASE_URL")
+	dbURL:= config.ReadEnvDb()
 
 	conn, err := pgx.Connect(context.Background(), dbURL)
 
