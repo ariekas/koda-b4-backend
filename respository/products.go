@@ -7,6 +7,8 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -153,14 +155,30 @@ func Delete(pool *pgxpool.Pool, ctx *gin.Context) error {
 func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, files []*multipart.FileHeader) ([]models.ImageProduct, error){
 	var inputImage []models.ImageProduct
 	now := time.Now()
+	maxSize := int64(5 * 1024 * 1024)
+	allowedTypes := map[string]bool{
+		".jpg":  true,
+		".jpeg": true,
+		".png":  true,
+		".webp": true,
+	}
 
 	for _, file := range files {
-		filePath := fmt.Sprintf("imagesProduct/%s", file.Filename)
+		if file.Size > maxSize {
+		 	fmt.Printf("file %s melebihi ukuran maksimum 5MB", file.Filename)
+		}
+
+		ext := strings.ToLower(filepath.Ext(file.Filename))
+		if !allowedTypes[ext] {
+		 	fmt.Printf("file %s bukan tipe gambar yang diizinkan (hanya jpg, jpeg, png, webp)", file.Filename)
+		}
 
 		err := os.MkdirAll("imagesProduct", os.ModePerm)
 		if err != nil {
 			fmt.Println("Error : Failed to create folder", err)
 		}
+
+		filePath := fmt.Sprintf("imagesProduct/%s", file.Filename)
 
 		err = saveUploadedFile(file, filePath)
 		if err != nil{
@@ -181,7 +199,6 @@ func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, fil
 		})
 	}
 	return  inputImage, nil
-	
 }
 
 func saveUploadedFile(file *multipart.FileHeader, path string) error {
