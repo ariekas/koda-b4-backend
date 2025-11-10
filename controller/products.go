@@ -13,6 +13,15 @@ type ProductController struct{
 	Conn *pgx.Conn
 }
 
+
+// GetProducts godoc
+// @Summary Get all products
+// @Tags Products
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} models.Response "Success getting products"
+// @Failure 401 {object} models.Response "Unauthorized"
+// @Router /products [get]
 func (pc ProductController) GetProducts(ctx *gin.Context){
 	produts, err := respository.GetProducts(pc.Conn)
 
@@ -30,6 +39,17 @@ func (pc ProductController) GetProducts(ctx *gin.Context){
 	})
 }
 
+// CreateProduct godoc
+// @Summary Create a new product
+// @Tags Products
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param product body models.ProductInput true "Product data"
+// @Success 201 {object} models.Response "Success create product"
+// @Failure 400 {object} models.Response "Invalid input"
+// @Failure 401 {object} models.Response "Unauthorized"
+// @Router /products [post]
 func (pc ProductController) CreateProduct(ctx *gin.Context){
 	product := respository.Create(ctx, pc.Conn)
 
@@ -40,6 +60,18 @@ func (pc ProductController) CreateProduct(ctx *gin.Context){
 	})
 }
 
+// EditProduct godoc
+// @Summary Edit product
+// @Tags Products
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Product ID"
+// @Param product body models.ProductInput true "Updated product data"
+// @Success 200 {object} models.Response "Success edit product"
+// @Failure 404 {object} models.Response "Product not found"
+// @Failure 401 {object} models.Response "Unauthorized"
+// @Router /products/edit/{id} [patch]
 func (pc ProductController) EditProduct(ctx *gin.Context){
 	newProduct, err := respository.Edit(pc.Conn, ctx)
 
@@ -68,6 +100,16 @@ func (pc ProductController) EditProduct(ctx *gin.Context){
 	})
 }
 
+// DeleteProduct godoc
+// @Summary Delete product
+// @Tags Products
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Product ID"
+// @Success 200 {object} models.Response "Success delete product"
+// @Failure 404 {object} models.Response "Product not found"
+// @Failure 401 {object} models.Response "Unauthorized"
+// @Router /products/delete/{id} [delete]
 func (pc ProductController) DeleteProduct(ctx *gin.Context){
 	err := respository.Delete(pc.Conn, ctx)
 
@@ -84,6 +126,18 @@ func (pc ProductController) DeleteProduct(ctx *gin.Context){
 	})
 }
 
+// CreateImageProduct godoc
+// @Summary Upload product images
+// @Tags Products
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param id path int true "Product ID"
+// @Param images formData file true "Upload product images"
+// @Success 201 {object} models.Response "Success create image product"
+// @Failure 400 {object} models.Response "Failed to upload image"
+// @Failure 401 {object} models.Response "Unauthorized"
+// @Router /products/{id}/create/image [post]
 func (pc ProductController) CreateImageProduct(ctx *gin.Context){
 	id := ctx.Param("id")
 	productId, _ := strconv.Atoi(id)
