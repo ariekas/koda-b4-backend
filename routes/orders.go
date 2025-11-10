@@ -14,6 +14,6 @@ func OrderRoutes(r *gin.RouterGroup, conn *pgx.Conn){
 	orders := r.Group("/orders")
 	{
 		orders.GET("/", middelware.VerifToken(), middelware.VerifRole("admin"), OrdersController.GetOrders)
-		orders.PATCH("/update/status/:id",middelware.VerifToken(), middelware.VerifRole("admin"), OrdersController.UpdateStatus)
+		orders.PATCH("/status/:id",middelware.VerifToken(), middelware.VerifRole("admin"), OrdersController.UpdateStatus)
 	}
 }

@@ -15,8 +15,8 @@ func ProductRoutes(r *gin.RouterGroup, conn *pgx.Conn){
 	{
 		products.GET("/", middelware.VerifToken(), middelware.VerifRole("admin"), productController.GetProducts)
 		products.POST("/", middelware.VerifToken(), middelware.VerifRole("admin"), productController.CreateProduct)
-		products.PATCH("/edit/:id", middelware.VerifToken(), middelware.VerifRole("admin"), productController.EditProduct)
-		products.DELETE("/delete/:id", middelware.VerifToken(), middelware.VerifRole("admin"), productController.DeleteProduct)
-		products.POST("/:id/create/image", productController.CreateImageProduct)
+		products.PATCH("/:id", middelware.VerifToken(), middelware.VerifRole("admin"), productController.EditProduct)
+		products.DELETE("/:id", middelware.VerifToken(), middelware.VerifRole("admin"), productController.DeleteProduct)
+		products.POST("/image/:id", productController.CreateImageProduct)
 	}
 }

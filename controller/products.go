@@ -71,7 +71,7 @@ func (pc ProductController) CreateProduct(ctx *gin.Context){
 // @Success 200 {object} models.Response "Success edit product"
 // @Failure 404 {object} models.Response "Product not found"
 // @Failure 401 {object} models.Response "Unauthorized"
-// @Router /products/edit/{id} [patch]
+// @Router /products/{id} [patch]
 func (pc ProductController) EditProduct(ctx *gin.Context){
 	newProduct, err := respository.Edit(pc.Conn, ctx)
 
@@ -109,7 +109,7 @@ func (pc ProductController) EditProduct(ctx *gin.Context){
 // @Success 200 {object} models.Response "Success delete product"
 // @Failure 404 {object} models.Response "Product not found"
 // @Failure 401 {object} models.Response "Unauthorized"
-// @Router /products/delete/{id} [delete]
+// @Router /products/{id} [delete]
 func (pc ProductController) DeleteProduct(ctx *gin.Context){
 	err := respository.Delete(pc.Conn, ctx)
 
@@ -137,7 +137,7 @@ func (pc ProductController) DeleteProduct(ctx *gin.Context){
 // @Success 201 {object} models.Response "Success create image product"
 // @Failure 400 {object} models.Response "Failed to upload image"
 // @Failure 401 {object} models.Response "Unauthorized"
-// @Router /products/{id}/create/image [post]
+// @Router /products/image/{id} [post]
 func (pc ProductController) CreateImageProduct(ctx *gin.Context){
 	id := ctx.Param("id")
 	productId, _ := strconv.Atoi(id)

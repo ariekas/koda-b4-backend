@@ -50,7 +50,7 @@ func (uc UserController) GetUsers(ctx *gin.Context){
 // @Success 201 {object} models.Response "User deleted successfully"
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Failure 404 {object} models.Response "User not found"
-// @Router /users/delete/{id} [delete]
+// @Router /users/{id} [delete]
 func (uc UserController) DeleteUser(ctx *gin.Context){
 	err := respository.DeleteUser(uc.Conn, ctx)
 
@@ -79,7 +79,7 @@ func (uc UserController) DeleteUser(ctx *gin.Context){
 // @Success 201 {object} models.Response "Role updated successfully"
 // @Failure 400 {object} models.Response "Invalid request"
 // @Failure 401 {object} models.Response "Unauthorized"
-// @Router /users/update/role/{id} [patch]
+// @Router /users/role/{id} [patch]
 func (uc UserController) UpdateRole(ctx *gin.Context){
 	id := ctx.Param("id")
 

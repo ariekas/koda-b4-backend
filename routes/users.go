@@ -13,8 +13,8 @@ func UsersRoutes(r *gin.RouterGroup, conn *pgx.Conn) {
 	users := r.Group("/users")
 	{
 		users.GET("/", middelware.VerifToken(), middelware.VerifRole("admin"), userController.GetUsers)
-		users.DELETE("/delete/:id", middelware.VerifToken(), middelware.VerifRole("admin"), userController.DeleteUser)
-		users.PATCH("/update/role/:id", userController.UpdateRole)
+		users.DELETE("/:id", middelware.VerifToken(), middelware.VerifRole("admin"), userController.DeleteUser)
+		users.PATCH("/role/:id", userController.UpdateRole)
 	}
 	}
 	

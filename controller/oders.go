@@ -49,7 +49,7 @@ func (oc OrdersController) GetOrders(ctx *gin.Context) {
 // @Param request body models.InputNewStatus true "New Status Data"
 // @Success 200 {object} models.Response
 // @Failure 401 {object} models.Response
-// @Router /orders/update/status/{id} [patch]
+// @Router /orders/status/{id} [patch]
 func (oc OrdersController) UpdateStatus(ctx *gin.Context) {
 	id := ctx.Param("id")
 
