@@ -31,22 +31,22 @@ func GetOrders(pool *pgxpool.Pool, page int) (PaginationResponseOrder, error) {
 	}
 
 	rows, err := pool.Query(context.Background(), `
-	SELECT
-		o.id AS order_id,
-		o.created_at,
-		o.status,
-		o.total,
-		json_agg(
-			json_build_object(
-				'product_name', p.name
-			)
-		) FILTER (WHERE p.id IS NOT NULL) AS products
-	FROM orders o
-	LEFT JOIN orderitems oi ON o.id = oi.orderid
-	LEFT JOIN product p ON p.id = oi.productid
-	GROUP BY o.id, o.created_at, o.status, o.total
-	ORDER BY o.id
-	OFFSET $1 LIMIT $2
+		SELECT
+			o.id AS order_id,
+			o.created_at,
+			o.status,
+			o.total,
+			json_agg(
+				json_build_object(
+					'product_name', p.name
+				)
+			) FILTER (WHERE p.id IS NOT NULL) AS products
+		FROM orders o
+		LEFT JOIN order_items oi ON o.id = oi.order_id
+		LEFT JOIN products p ON p.id = oi.product_id
+		GROUP BY o.id, o.created_at, o.status, o.total
+		ORDER BY o.id
+		OFFSET $1 LIMIT $2
 	`, offset, limit)
 	if err != nil {
 		fmt.Println("Error: Failed get data orders", err)
@@ -110,7 +110,7 @@ func GetOrderById(pool *pgxpool.Pool, orderId int) (models.Order, error) {
 	  u.fullname AS user_fullname,
 	  pr.address AS user_address,
 	  pr.phone AS user_phone,
-	  o.paymentmethod,
+	  o.payment_method,
 	  d.type AS delivery_name,
 	  json_agg(
 		json_build_object(
@@ -120,11 +120,11 @@ func GetOrderById(pool *pgxpool.Pool, orderId int) (models.Order, error) {
 		)
 	  ) FILTER (WHERE oi.id IS NOT NULL) AS products
 	FROM orders o
-	LEFT JOIN orderitems oi ON o.id = oi.orderid
-	LEFT JOIN product p ON p.id = oi.productid
-	LEFT JOIN users u ON u.id = o.userid
-	LEFT JOIN profile pr ON pr.id = u.profileid
-	LEFT JOIN delivery d ON d.orderid = o.id
+	LEFT JOIN order_items oi ON o.id = oi.order_id
+	LEFT JOIN products p ON p.id = oi.product_id
+	LEFT JOIN users u ON u.id = o.user_id
+	LEFT JOIN profile pr ON pr.id = u.profile_id
+	LEFT JOIN deliverys d ON d.order_id = o.id
 	WHERE o.id = $1
 	GROUP BY 
 	  o.id, 
@@ -133,7 +133,7 @@ func GetOrderById(pool *pgxpool.Pool, orderId int) (models.Order, error) {
 	  u.fullname,
 	  pr.address,
 	  pr.phone,
-	  o.paymentmethod,
+	  o.payment_method,
 	  d.type
 	`
 
@@ -161,13 +161,14 @@ func GetOrderById(pool *pgxpool.Pool, orderId int) (models.Order, error) {
 	return order, nil
 }
 
-
 func UpdateStatus(pool *pgxpool.Pool, orderId int, newStatus string) error {
-	_, err := pool.Exec(context.Background(), "UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2", newStatus, orderId)
+	_, err := pool.Exec(context.Background(),
+		"UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2",
+		newStatus, orderId)
 
 	if err != nil {
 		fmt.Println("Error updating order status:", err)
 	}
 
-	return nil
+	return err
 }
