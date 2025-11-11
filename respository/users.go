@@ -37,7 +37,7 @@ func GetDataUsers(pool *pgxpool.Pool, page int) (PaginationResponseUser, error) 
 		  p.phone,
 		  p.address
 		FROM users u
-		LEFT JOIN profile p ON u.profileid = p.id
+		LEFT JOIN profile p ON u.profile_id = p.id
 		ORDER BY u.id
 		OFFSET $1 LIMIT $2
 	`, offset, limit)
