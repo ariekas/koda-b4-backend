@@ -1,18 +1,22 @@
 package controller
 
 import (
+	"back-end-coffeShop/lib/config"
 	"back-end-coffeShop/models"
 	"back-end-coffeShop/respository"
+	"context"
+	"encoding/json"
+	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type ProductController struct{
+type ProductController struct {
 	Pool *pgxpool.Pool
 }
-
 
 // GetProducts godoc
 // @Summary Get all products
@@ -22,31 +26,48 @@ type ProductController struct{
 // @Success 200 {object} models.Response "Success getting products"
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products [get]
-func (pc ProductController) GetProducts(ctx *gin.Context){
+func (pc ProductController) GetProducts(ctx *gin.Context) {
+	cache, err := config.Redis().Get(context.Background(), ctx.Request.RequestURI).Result()
+	if err != nil {
+		fmt.Println("Error: Redis", err)
+	}
+
 	pageQuery := ctx.Query("page")
 	page := 1
 	if pageQuery != "" {
-		p, err := strconv.Atoi(pageQuery)
-		if err == nil && p > 0 {
+		if p, err := strconv.Atoi(pageQuery); err == nil && p > 0 {
 			page = p
 		}
 	}
-	
-	produts, err := respository.GetProducts(pc.Pool,page )
 
-	if err != nil {
-		ctx.JSON(401, models.Response{
-			Success: false,
-			Message: "Failed to getting data products",
-		})
+	var response respository.PaginationResponse
+
+	if cache == "" {
+		response, err = respository.GetProducts(pc.Pool, page)
+		if err != nil {
+			ctx.JSON(500, models.Response{
+				Success: false,
+				Message: "Failed getting data products",
+			})
+			return
+		}
+
+		dataProduct, err := json.Marshal(response)
+		if err == nil {
+			config.Redis().Set(context.Background(), ctx.Request.RequestURI, dataProduct, 5*time.Minute)
+		}
+
+	} else {
+		_ = json.Unmarshal([]byte(cache), &response)
 	}
 
-	ctx.JSON(201, models.Response{
+	ctx.JSON(200, models.Response{
 		Success: true,
-		Message: "Sucess getting data products",
-		Data: produts,
+		Message: "Success getting data products",
+		Data:    response,
 	})
 }
+
 
 // CreateProduct godoc
 // @Summary Create a new product
@@ -59,13 +80,22 @@ func (pc ProductController) GetProducts(ctx *gin.Context){
 // @Failure 400 {object} models.Response "Invalid input"
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products [post]
-func (pc ProductController) CreateProduct(ctx *gin.Context){
+func (pc ProductController) CreateProduct(ctx *gin.Context) {
 	product := respository.Create(ctx, pc.Pool)
+
+	redis := config.Redis()
+	iter := redis.Scan(context.Background(), 0 ,"/products*", 0).Iterator()
+	for iter.Next(context.Background()) {
+		redis.Del(context.Background(), iter.Val())
+	}
+	if err := iter.Err(); err != nil {
+		fmt.Println("Redis scan error:", err)
+	}
 
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Success Create product",
-		Data: product,
+		Data:    product,
 	})
 }
 
@@ -81,7 +111,7 @@ func (pc ProductController) CreateProduct(ctx *gin.Context){
 // @Failure 404 {object} models.Response "Product not found"
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products/{id} [patch]
-func (pc ProductController) EditProduct(ctx *gin.Context){
+func (pc ProductController) EditProduct(ctx *gin.Context) {
 	newProduct, err := respository.Edit(pc.Pool, ctx)
 
 	if err != nil {
@@ -105,7 +135,7 @@ func (pc ProductController) EditProduct(ctx *gin.Context){
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Success edit product",
-		Data: newProduct,
+		Data:    newProduct,
 	})
 }
 
@@ -119,7 +149,7 @@ func (pc ProductController) EditProduct(ctx *gin.Context){
 // @Failure 404 {object} models.Response "Product not found"
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products/{id} [delete]
-func (pc ProductController) DeleteProduct(ctx *gin.Context){
+func (pc ProductController) DeleteProduct(ctx *gin.Context) {
 	err := respository.Delete(pc.Pool, ctx)
 
 	if err != nil {
@@ -147,11 +177,11 @@ func (pc ProductController) DeleteProduct(ctx *gin.Context){
 // @Failure 400 {object} models.Response "Failed to upload image"
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products/image/{id} [post]
-func (pc ProductController) CreateImageProduct(ctx *gin.Context){
+func (pc ProductController) CreateImageProduct(ctx *gin.Context) {
 	id := ctx.Param("id")
 	productId, _ := strconv.Atoi(id)
 
-	from , err := ctx.MultipartForm()
+	from, err := ctx.MultipartForm()
 	if err != nil {
 		ctx.JSON(400, models.Response{
 			Success: false,
@@ -180,11 +210,11 @@ func (pc ProductController) CreateImageProduct(ctx *gin.Context){
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Success create image product",
-		Data: imageProduct,
+		Data:    imageProduct,
 	})
 }
 
-func (pc ProductController) GetAllImageProduct(ctx *gin.Context){
+func (pc ProductController) GetAllImageProduct(ctx *gin.Context) {
 	images, err := respository.GetAllImageProduct(pc.Pool)
 
 	if err != nil {
@@ -202,7 +232,7 @@ func (pc ProductController) GetAllImageProduct(ctx *gin.Context){
 	})
 }
 
-func (pc ProductController) DeleteImageProduct(ctx *gin.Context){
+func (pc ProductController) DeleteImageProduct(ctx *gin.Context) {
 	id := ctx.Param("id")
 	imageId, _ := strconv.Atoi(id)
 
