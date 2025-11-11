@@ -347,3 +347,109 @@ func GetProductFavorite(pool *pgxpool.Pool, limit int) ([]models.Product, int, e
 
 	return products, total, nil
 }
+
+func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy, priceMin, priceMax string, page, limit int) ([]models.Product, int, error) {
+	var products []models.Product
+	offset := (page - 1) * limit
+
+	query := `
+	SELECT 
+			p.id, p.name, p.price, p.description, 
+			p.product_size, p.stock, p.isFlashSale, p.isFavorite_product, 
+			p.temperature, p.category_product_id, COALESCE(ip.image, '') AS image
+		FROM products p
+		LEFT JOIN image_products ip ON ip.product_id = p.id
+		WHERE 1=1
+	`
+	args := []interface{}{}
+	argIndex := 1
+
+	if name != "" {
+		query += fmt.Sprintf("AND LOWER(p.name) LIKE LOWER($%d)", argIndex)
+		args = append(args, "%"+name+"%")
+		argIndex++
+	}
+
+	if categoryStr != "" {
+		categorys := strings.Split(categoryStr, ",")
+		query += fmt.Sprintf(" AND p.category_product_id = ANY($%d)", argIndex)
+		args = append(args, categorys)
+		argIndex++
+	}
+
+	if priceMin != "" {
+		query += fmt.Sprintf(" AND p.price >= $%d", argIndex)
+		args = append(args, priceMin)
+		argIndex++
+	}
+
+	if priceMax != "" {
+		query += fmt.Sprintf(" AND p.price <= $%d", argIndex)
+		args = append(args, priceMax)
+		argIndex++
+	}
+
+	switch sortBy {
+	case "price_asc":
+		query += " ORDER BY p.price ASC"
+	case "price_desc":
+		query += " ORDER BY p.price DESC"
+	case "newest":
+		query += " ORDER BY p.created_at DESC"
+	default:
+		query += " ORDER BY p.id ASC"
+	}
+
+	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
+	args = append(args, limit, offset)
+
+	rows, err := pool.Query(context.Background(), query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var p models.Product
+		err := rows.Scan(&p.Id, &p.Name, &p.Price, &p.Description, &p.Productsize, &p.Stock, &p.Isflashsale, &p.IsFavorite_product, &p.Tempelatur, &p.Category_productid, &p.Image)
+		if err != nil {
+			fmt.Println("Error scanning product:", err)
+			continue
+		}
+		products = append(products, p)
+	}
+
+	countQuery := "SELECT COUNT(*) FROM products p WHERE 1=1"
+	countArgs := []interface{}{}
+	argIdx := 1
+
+	if name != "" {
+		countQuery += fmt.Sprintf(" AND LOWER(p.name) LIKE LOWER($%d)", argIdx)
+		countArgs = append(countArgs, "%"+name+"%")
+		argIdx++
+	}
+	if categoryStr != "" {
+		categories := strings.Split(categoryStr, ",")
+		countQuery += fmt.Sprintf(" AND p.category_product_id = ANY($%d)", argIdx)
+		countArgs = append(countArgs, categories)
+		argIdx++
+	}
+	if priceMin != "" {
+		countQuery += fmt.Sprintf(" AND p.price >= $%d", argIdx)
+		countArgs = append(countArgs, priceMin)
+		argIdx++
+	}
+	if priceMax != "" {
+		countQuery += fmt.Sprintf(" AND p.price <= $%d", argIdx)
+		countArgs = append(countArgs, priceMax)
+		argIdx++
+	}
+
+	var total int
+	err = pool.QueryRow(context.Background(), countQuery, countArgs...).Scan(&total)
+	if err != nil {
+		fmt.Println("Error :", err)
+	}
+
+	return products, total, nil
+}

@@ -7,6 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -266,10 +268,82 @@ func (pc ProductController) GetFavoriteProducts(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(200, gin.H{
-		"limit": limit,
-		"total": total,
-		"data":  data,
+	response := respository.PaginationResponse{
+		Data:       data,
+		Page:       1, 
+		Limit:      limit,
+		Total:      total,
+		TotalPages: int(math.Ceil(float64(total) / float64(limit))),
+		Links: map[string]string{
+			"self": fmt.Sprintf("/products/favorite?limit=%d", limit),
+		},
+	}
+
+	ctx.JSON(200, models.Response{
+		Success: true,
+		Message: "Success getting favorite product",
+		Data:  response,
 	})
 }
 
+func (pc ProductController) Filter(ctx *gin.Context) {
+	name := ctx.Query("name")
+	categoryStr := ctx.Query("category")
+	sortBy := ctx.Query("sort_by")
+	priceMin := ctx.Query("price_min")
+	priceMax := ctx.Query("price_max")
+	pageQuery := ctx.Query("page")
+	limitQuery := ctx.Query("limit")
+
+	page := 1
+	limit := 20
+	if p, err := strconv.Atoi(pageQuery); err == nil && p > 0 {
+		page = p
+	}
+	if l, err := strconv.Atoi(limitQuery); err == nil && l > 0 {
+		limit = l
+	}
+
+	data, total, err := respository.FilterProducts(pc.Pool, name, categoryStr, sortBy, priceMin, priceMax, page, limit)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.Response{
+			Success: false,
+			Message: fmt.Sprintf("Error: %v", err),
+		})
+		return
+	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	baseURL := fmt.Sprintf("/products/filter?name=%s&category=%s&sort_by=%s&price_min=%s&price_max=%s&limit=%d",
+		name, categoryStr, sortBy, priceMin, priceMax, limit,
+	)
+
+	links := map[string]string{
+		"self":  fmt.Sprintf("%s&page=%d", baseURL, page),
+		"first": fmt.Sprintf("%s&page=1", baseURL),
+		"last":  fmt.Sprintf("%s&page=%d", baseURL, totalPages),
+	}
+
+	if page > 1 {
+		links["prev"] = fmt.Sprintf("%s&page=%d", baseURL, page-1)
+	}
+	if page < totalPages {
+		links["next"] = fmt.Sprintf("%s&page=%d", baseURL, page+1)
+	}
+
+	response := respository.PaginationResponse{
+		Data:       data,
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: totalPages,
+		Links:      links,
+	}
+
+	ctx.JSON(http.StatusOK, models.Response{
+		Success: true,
+		Message: "Success filtering products",
+		Data:    response,
+	})
+}
