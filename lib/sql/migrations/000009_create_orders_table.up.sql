@@ -1,0 +1,10 @@
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  user_id INT,
+  payment_method VARCHAR(50),
+  status VARCHAR(50),
+  total DECIMAL(10,2),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

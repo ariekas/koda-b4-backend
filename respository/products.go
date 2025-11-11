@@ -31,19 +31,23 @@ func GetProducts(pool *pgxpool.Pool, page int) (PaginationResponse, error) {
 	offset := (page - 1) * limit
 
 	var total int
-	err := pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM product").Scan(&total)
+	err := pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM products").Scan(&total)
 	if err != nil {
 		fmt.Println("Error counting products:", err)
 	}
 
 	rows, err := pool.Query(context.Background(), `
-	SELECT id, name, price, description, productsize, stock, isflashsale, tempelatur, category_productid, created_at, updated_at 
-	FROM product 
-	ORDER BY id 
-	OFFSET $1 LIMIT $2
-`, offset, limit)
+		SELECT p.id, p.name, p.price, p.description, p.product_size, p.stock, 
+		       p.isFlashSale, p.isFavorite_product, p.temperature, p.category_product_id, 
+		       COALESCE(ip.image, '') AS image,
+		       p.created_at, p.updated_at
+		FROM products p
+		LEFT JOIN image_products ip ON ip.product_id = p.id
+		ORDER BY p.id
+		OFFSET $1 LIMIT $2
+	`, offset, limit)
 	if err != nil {
-		fmt.Println("Error: Failed get data product")
+		fmt.Println("Error: Failed get data product", err)
 	}
 
 	for rows.Next() {
@@ -56,8 +60,10 @@ func GetProducts(pool *pgxpool.Pool, page int) (PaginationResponse, error) {
 			&product.Productsize,
 			&product.Stock,
 			&product.Isflashsale,
+			&product.IsFavorite_product,
 			&product.Tempelatur,
 			&product.Category_productid,
+			&product.Image,
 			&product.Created_at,
 			&product.Updated_at,
 		)
@@ -73,69 +79,53 @@ func GetProducts(pool *pgxpool.Pool, page int) (PaginationResponse, error) {
 	if page > 1 {
 		links["prev"] = fmt.Sprintf("/products?page=%d", page-1)
 	} else {
-		links["prev"] = "nul"
+		links["prev"] = "null"
 	}
 
 	if page < totalPages {
 		links["next"] = fmt.Sprintf("/products?page=%d", page+1)
 	}
 
-	response := PaginationResponse{
+	return PaginationResponse{
 		Data:       dataProduct,
 		Page:       page,
 		Limit:      limit,
 		Total:      total,
 		TotalPages: totalPages,
 		Links:      links,
-	}
-
-	return response, nil
+	}, nil
 }
 
 func Create(ctx *gin.Context, pool *pgxpool.Pool) models.Product {
 	var input models.Product
-
-	err := ctx.BindJSON(&input)
-
-	if err != nil {
-		fmt.Println("Error: Invalid type much json")
+	if err := ctx.BindJSON(&input); err != nil {
+		fmt.Println("Error: Invalid JSON type", err)
 	}
 
 	now := time.Now()
-
-	_, err = pool.Exec(context.Background(), "INSERT INTO product (name, price, description, productsize, stock, isflashsale, tempelatur, category_productid, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", input.Name, input.Price, input.Description, input.Productsize, input.Stock, input.Isflashsale, input.Tempelatur, input.Category_productid, now, now)
+	_, err := pool.Exec(context.Background(), `
+		INSERT INTO products (name, price, description, product_size, stock, isFlashSale, isfavorite_product, temperature, category_product_id, created_at, updated_at)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+	`, input.Name, input.Price, input.Description, input.Productsize, input.Stock, input.Isflashsale, input.IsFavorite_product, input.Tempelatur, input.Category_productid, now, now)
 
 	if err != nil {
-		fmt.Println("Error insert product:", err)
+		fmt.Println("Error inserting product:", err)
 	}
 
 	input.Created_at = now
 	input.Updated_at = now
-
 	return input
 }
 
 func GetById(ctx *gin.Context, pool *pgxpool.Pool) (models.Product, error) {
 	id := ctx.Param("id")
-
 	var product models.Product
 
 	err := pool.QueryRow(context.Background(), `
-		SELECT id, name, price, description, productsize, stock, isflashsale, tempelatur, category_productid, created_at, updated_at
-		FROM product WHERE id = $1
-	`, id).Scan(
-		&product.Id,
-		&product.Name,
-		&product.Price,
-		&product.Description,
-		&product.Productsize,
-		&product.Stock,
-		&product.Isflashsale,
-		&product.Tempelatur,
-		&product.Category_productid,
-		&product.Created_at,
-		&product.Updated_at,
-	)
+		SELECT id, name, price, description, product_size, stock, isFlashSale, isFavorite_product, temperature, category_product_id, created_at, updated_at
+		FROM products
+		WHERE id = $1
+	`, id).Scan(&product.Id, &product.Name, &product.Price, &product.Description, &product.Productsize, &product.Stock, &product.Isflashsale, &product.IsFavorite_product, &product.Tempelatur, &product.Category_productid, &product.Created_at, &product.Updated_at)
 
 	return product, err
 }
@@ -175,6 +165,9 @@ func Edit(pool *pgxpool.Pool, ctx *gin.Context) (models.Product, error) {
 	if newProduct.Isflashsale == nil {
 		newProduct.Isflashsale = oldProduct.Isflashsale
 	}
+	if newProduct.IsFavorite_product == nil {
+		newProduct.IsFavorite_product = oldProduct.IsFavorite_product
+	}
 	if newProduct.Tempelatur == "" {
 		newProduct.Tempelatur = oldProduct.Tempelatur
 	}
@@ -182,15 +175,21 @@ func Edit(pool *pgxpool.Pool, ctx *gin.Context) (models.Product, error) {
 		newProduct.Category_productid = oldProduct.Category_productid
 	}
 
-	_, err = pool.Exec(context.Background(), "UPDATE product SET name=$1, price=$2, description=$3, productsize=$4, stock=$5, isflashsale=$6, tempelatur=$7, category_productid=$8, updated_at=NOW() WHERE id = $9", newProduct.Name, newProduct.Price, newProduct.Description, newProduct.Productsize,
-		newProduct.Stock, *newProduct.Isflashsale, newProduct.Tempelatur, newProduct.Category_productid, id)
+	_, err = pool.Exec(context.Background(),
+		`UPDATE products 
+     SET name=$1, price=$2, description=$3, product_size=$4, stock=$5, 
+         isflashsale=$6, isfavorite_product=$7, temperature=$8, category_product_id=$9, updated_at=NOW() 
+     WHERE id = $10`,
+		newProduct.Name, newProduct.Price, newProduct.Description, newProduct.Productsize,
+		newProduct.Stock, *newProduct.Isflashsale, *newProduct.IsFavorite_product,
+		newProduct.Tempelatur, newProduct.Category_productid, id)
 
 	return newProduct, err
 }
 
 func Delete(pool *pgxpool.Pool, ctx *gin.Context) error {
 	id := ctx.Param("id")
-	_, err := pool.Exec(context.Background(), "DELETE FROM product WHERE id = $1", id)
+	_, err := pool.Exec(context.Background(), "DELETE FROM products WHERE id = $1", id)
 
 	return err
 }
@@ -228,7 +227,7 @@ func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, fil
 			fmt.Println("Error :", err)
 		}
 
-		_, err = pool.Exec(context.Background(), "INSERT INTO imageproduct (productid, image, created_at, updated_at) VALUES ($1, $2, $3, $4)", productId, filePath, now, now)
+		_, err = pool.Exec(context.Background(), "INSERT INTO imageproduct (product_id, image, created_at, updated_at) VALUES ($1, $2, $3, $4)", productId, filePath, now, now)
 
 		if err != nil {
 			fmt.Println("Error: Failed to create image prodct", err)
@@ -247,7 +246,7 @@ func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, fil
 func GetAllImageProduct(pool *pgxpool.Pool) ([]models.ImageProduct, error) {
 	var images []models.ImageProduct
 
-	rows, err := pool.Query(context.Background(), "SELECT id, productid, image, created_at, updated_at  FROM imageproduct ORDER BY id ASC")
+	rows, err := pool.Query(context.Background(), "SELECT id, product_id, image, created_at, updated_at  FROM image_products ORDER BY id ASC")
 
 	if err != nil {
 		fmt.Println("Error : Failed to get all image product", err)
@@ -265,10 +264,10 @@ func GetAllImageProduct(pool *pgxpool.Pool) ([]models.ImageProduct, error) {
 	return images, nil
 }
 
-func DeleteImageProduct(pool *pgxpool.Pool, id int) error{
+func DeleteImageProduct(pool *pgxpool.Pool, id int) error {
 	var imagePath string
 
-	err := pool.QueryRow(context.Background(), "SELECT image FROM imageproduct WHERE id = $1", id).Scan(&imagePath)
+	err := pool.QueryRow(context.Background(), "SELECT image FROM image_products WHERE id = $1", id).Scan(&imagePath)
 	if err != nil {
 		fmt.Println("image not found:", err)
 	}
@@ -278,14 +277,13 @@ func DeleteImageProduct(pool *pgxpool.Pool, id int) error{
 		fmt.Println("Error: Failed to delete image:", err)
 	}
 
-	_, err = pool.Exec(context.Background(), "DELETE FROM imageproduct WHERE id = $1", id)
+	_, err = pool.Exec(context.Background(), "DELETE FROM image_products WHERE id = $1", id)
 	if err != nil {
 		fmt.Println("failed to delete image product:", err)
 	}
 
 	return nil
 }
-
 
 func saveUploadedFile(file *multipart.FileHeader, path string) error {
 	src, err := file.Open()
@@ -302,4 +300,50 @@ func saveUploadedFile(file *multipart.FileHeader, path string) error {
 
 	_, err = io.Copy(dst, src)
 	return err
+}
+
+func GetProductFavorite(pool *pgxpool.Pool, limit int) ([]models.Product, int, error) {
+	var products []models.Product
+
+	if limit < 4 {
+		limit = 4
+	}
+
+	var total int
+	err := pool.QueryRow(context.Background(),
+		"SELECT COUNT(*) FROM products WHERE isFavorite_product = true").Scan(&total)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error counting favorite products: %v", err)
+	}
+
+	rows, err := pool.Query(context.Background(), `
+		SELECT 
+			p.id,
+			p.name,
+			p.description,
+			p.price,
+			COALESCE(ip.image, '') AS image
+		FROM products p
+		LEFT JOIN image_products ip ON ip.product_id = p.id
+		WHERE p.isFavorite_product = true
+		GROUP BY p.id, ip.image
+		ORDER BY p.id
+		LIMIT $1
+	`, limit)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error fetching favorite products: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var p models.Product
+		err := rows.Scan(&p.Id, &p.Name, &p.Description, &p.Price, &p.Image)
+		if err != nil {
+			fmt.Println("Error scanning product:", err)
+			continue
+		}
+		products = append(products, p)
+	}
+
+	return products, total, nil
 }

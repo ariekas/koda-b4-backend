@@ -1,0 +1,1 @@
+ALTER TABLE deliverys DROP CONSTRAINT fk_delivery_order;

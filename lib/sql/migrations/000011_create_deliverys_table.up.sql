@@ -1,0 +1,9 @@
+
+CREATE TABLE deliverys (
+  id SERIAL PRIMARY KEY,
+  order_id INT,
+  type VARCHAR(50),
+  fee DECIMAL(10,2),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

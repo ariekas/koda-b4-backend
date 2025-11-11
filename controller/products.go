@@ -157,6 +157,7 @@ func (pc ProductController) DeleteProduct(ctx *gin.Context) {
 			Success: false,
 			Message: "Error: Failed to get product",
 		})
+		return
 	}
 
 	ctx.JSON(201, models.Response{
@@ -250,3 +251,25 @@ func (pc ProductController) DeleteImageProduct(ctx *gin.Context) {
 		Message: "Success delete image product",
 	})
 }
+
+func (pc ProductController) GetFavoriteProducts(ctx *gin.Context) {
+	limitStr := ctx.Query("limit")
+	limit := 4
+
+	if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+		limit = l
+	}
+
+	data, total, err := respository.GetProductFavorite(pc.Pool, limit)
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"limit": limit,
+		"total": total,
+		"data":  data,
+	})
+}
+

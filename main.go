@@ -32,11 +32,7 @@ func main() {
 	r.Use(middelware.CrossMiddelware)
 	r.Use(middelware.AllowPreflight)
 	
-	routes.UsersRoutes(&r.RouterGroup, connectDb)
-	routes.AuthRoutes(&r.RouterGroup, connectDb)
-	routes.ProductRoutes(&r.RouterGroup, connectDb)
-	routes.OrderRoutes(&r.RouterGroup, connectDb)
-	routes.CategoryProductRoutes(&r.RouterGroup, connectDb)
+	routes.MainRoutes(r, connectDb)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.Run(":8080")

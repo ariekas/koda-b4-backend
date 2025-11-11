@@ -1,4 +1,4 @@
-package routes
+package auth
 
 import (
 	"back-end-coffeShop/controller"

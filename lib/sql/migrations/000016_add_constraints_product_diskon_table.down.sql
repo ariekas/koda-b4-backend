@@ -1,0 +1,2 @@
+ALTER TABLE product_diskon DROP CONSTRAINT fk_product_diskon_product;
+ALTER TABLE product_diskon DROP CONSTRAINT fk_product_diskon_diskon;

@@ -1,0 +1,8 @@
+CREATE TABLE ratings (
+  id SERIAL PRIMARY KEY,
+  user_id INT,
+  product_id INT,
+  rating INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
