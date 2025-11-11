@@ -1,1 +1,1 @@
-ALTER TABLE image_product DROP CONSTRAINT fk_image_product;
+ALTER TABLE image_products DROP CONSTRAINT fk_image_product;

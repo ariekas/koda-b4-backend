@@ -15,67 +15,67 @@ VALUES
 ('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', '084567890123', 'Yogyakarta', NOW(), NOW()),
 ('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', '085678901234', 'Medan', NOW(), NOW());
 
-INSERT INTO products (name, price, description, product_size, stock, isFlashSale, isFavorite_product, temperature, category_product_id)
+INSERT INTO products (name, price, description, stock, isFlashSale, isFavorite_product, category_product_id)
 VALUES
-('Americano', 25000, 'Kopi hitam klasik dengan aroma kuat.', 'M', 100, false, true, 'Hot', 1),
-('Cappuccino', 30000, 'Perpaduan espresso, susu, dan foam lembut.', 'M', 80, true, true, 'Hot', 1),
-('Caffe Latte', 32000, 'Espresso dan susu creamy, cocok untuk santai.', 'L', 90, false, true, 'Hot', 1),
-('Espresso', 22000, 'Kopi pekat untuk pecinta rasa kuat.', 'S', 70, true, false, 'Hot', 1),
-('Mocha Latte', 35000, 'Kopi dengan campuran cokelat lezat.', 'M', 60, false, true, 'Hot', 1),
+('Americano', 25000, 'Kopi hitam klasik dengan aroma kuat.', 100, false, true, 1),
+('Cappuccino', 30000, 'Perpaduan espresso, susu, dan foam lembut.', 80, true, true, 1),
+('Caffe Latte', 32000, 'Espresso dan susu creamy, cocok untuk santai.', 90, false, true, 1),
+('Espresso', 22000, 'Kopi pekat untuk pecinta rasa kuat.', 70, true, false, 1),
+('Mocha Latte', 35000, 'Kopi dengan campuran cokelat lezat.', 60, false, true, 1),
 
-('Green Tea Latte', 28000, 'Minuman teh hijau lembut dan manis.', 'M', 100, false, false, 'Hot', 2),
-('Thai Tea', 26000, 'Teh khas Thailand dengan rasa manis kental.', 'L', 120, true, true, 'Cold', 2),
-('Lemon Tea', 20000, 'Teh dengan perasan lemon segar.', 'M', 150, false, false, 'Cold', 2),
-('Black Tea', 18000, 'Teh hitam klasik dengan aroma tajam.', 'S', 90, false, false, 'Hot', 2),
-('Jasmine Tea', 22000, 'Teh melati harum yang menenangkan.', 'M', 80, false, true, 'Hot', 2),
+('Green Tea Latte', 28000, 'Minuman teh hijau lembut dan manis.', 100, false, false, 2),
+('Thai Tea', 26000, 'Teh khas Thailand dengan rasa manis kental.', 120, true, true, 2),
+('Lemon Tea', 20000, 'Teh dengan perasan lemon segar.', 150, false, false, 2),
+('Black Tea', 18000, 'Teh hitam klasik dengan aroma tajam.', 90, false, false, 2),
+('Jasmine Tea', 22000, 'Teh melati harum yang menenangkan.', 80, false, true, 2),
 
-('Fresh Milk', 18000, 'Susu murni segar tanpa tambahan rasa.', 'M', 100, false, false, 'Cold', 3),
-('Chocolate Milk', 24000, 'Susu cokelat manis favorit anak-anak.', 'M', 90, true, true, 'Cold', 3),
-('Strawberry Milk', 24000, 'Susu rasa stroberi segar dan lembut.', 'L', 80, false, true, 'Cold', 3),
-('Banana Milk', 25000, 'Susu dengan aroma pisang alami.', 'M', 100, false, false, 'Cold', 3),
-('Matcha Milk', 27000, 'Susu dengan bubuk matcha premium.', 'M', 100, false, true, 'Cold', 3),
+('Fresh Milk', 18000, 'Susu murni segar tanpa tambahan rasa.', 100, false, false, 3),
+('Chocolate Milk', 24000, 'Susu cokelat manis favorit anak-anak.', 90, true, true, 3),
+('Strawberry Milk', 24000, 'Susu rasa stroberi segar dan lembut.', 80, false, true, 3),
+('Banana Milk', 25000, 'Susu dengan aroma pisang alami.', 100, false, false, 3),
+('Matcha Milk', 27000, 'Susu dengan bubuk matcha premium.', 100, false, true, 3),
 
-('Orange Juice', 23000, 'Jus jeruk segar penuh vitamin C.', 'L', 150, false, false, 'Cold', 4),
-('Apple Juice', 24000, 'Jus apel murni tanpa gula tambahan.', 'M', 140, false, false, 'Cold', 4),
-('Mango Juice', 25000, 'Jus mangga manis segar alami.', 'L', 130, true, true, 'Cold', 4),
-('Avocado Juice', 28000, 'Jus alpukat kental dengan susu cokelat.', 'L', 90, false, true, 'Cold', 4),
-('Watermelon Juice', 22000, 'Jus semangka segar, cocok untuk panas.', 'M', 150, false, false, 'Cold', 4),
+('Orange Juice', 23000, 'Jus jeruk segar penuh vitamin C.', 150, false, false, 4),
+('Apple Juice', 24000, 'Jus apel murni tanpa gula tambahan.', 140, false, false, 4),
+('Mango Juice', 25000, 'Jus mangga manis segar alami.', 130, true, true, 4),
+('Avocado Juice', 28000, 'Jus alpukat kental dengan susu cokelat.', 90, false, true, 4),
+('Watermelon Juice', 22000, 'Jus semangka segar, cocok untuk panas.', 150, false, false, 4),
 
-('Donut Original', 15000, 'Donat lembut dengan taburan gula halus.', 'M', 80, false, false, 'Warm', 5),
-('Chocolate Donut', 17000, 'Donat dengan lelehan cokelat di atasnya.', 'M', 100, true, true, 'Warm', 5),
-('Strawberry Donut', 17000, 'Donat dengan glaze stroberi manis.', 'M', 90, false, false, 'Warm', 5),
-('Cheese Croissant', 22000, 'Croissant lembut isi keju meleleh.', 'L', 70, true, true, 'Warm', 5),
-('Butter Croissant', 20000, 'Croissant klasik dengan mentega berkualitas.', 'M', 100, false, false, 'Warm', 5),
+('Donut Original', 15000, 'Donat lembut dengan taburan gula halus.', 80, false, false, 5),
+('Chocolate Donut', 17000, 'Donat dengan lelehan cokelat di atasnya.', 100, true, true, 5),
+('Strawberry Donut', 17000, 'Donat dengan glaze stroberi manis.', 90, false, false, 5),
+('Cheese Croissant', 22000, 'Croissant lembut isi keju meleleh.', 70, true, true, 5),
+('Butter Croissant', 20000, 'Croissant klasik dengan mentega berkualitas.', 100, false, false, 5),
 
-('Caramel Macchiato', 34000, 'Kopi dengan sirup karamel dan susu.', 'L', 85, true, true, 'Hot', 1),
-('Vanilla Latte', 33000, 'Latte lembut dengan aroma vanilla.', 'L', 80, false, true, 'Hot', 1),
-('Hazelnut Coffee', 36000, 'Kopi dengan rasa kacang hazelnut.', 'M', 70, false, false, 'Hot', 1),
-('Double Espresso', 26000, 'Dua shot espresso untuk tenaga ekstra.', 'S', 60, false, true, 'Hot', 1),
-('Irish Coffee', 38000, 'Kopi khas dengan sentuhan krim irish.', 'M', 50, false, true, 'Hot', 1),
+('Caramel Macchiato', 34000, 'Kopi dengan sirup karamel dan susu.', 85, true, true, 1),
+('Vanilla Latte', 33000, 'Latte lembut dengan aroma vanilla.', 80, false, true, 1),
+('Hazelnut Coffee', 36000, 'Kopi dengan rasa kacang hazelnut.', 70, false, false, 1),
+('Double Espresso', 26000, 'Dua shot espresso untuk tenaga ekstra.', 60, false, true, 1),
+('Irish Coffee', 38000, 'Kopi khas dengan sentuhan krim irish.', 50, false, true, 1),
 
-('Lychee Tea', 23000, 'Teh dingin rasa leci menyegarkan.', 'L', 130, true, true, 'Cold', 2),
-('Peach Tea', 24000, 'Teh rasa buah persik lembut.', 'M', 120, false, false, 'Cold', 2),
-('Milk Tea', 25000, 'Teh dengan susu creamy khas Taiwan.', 'L', 140, true, true, 'Cold', 2),
-('Honey Lemon Tea', 26000, 'Teh lemon dengan madu alami.', 'M', 100, false, true, 'Hot', 2),
-('Earl Grey Tea', 22000, 'Teh hitam premium dengan aroma bergamot.', 'M', 90, false, false, 'Hot', 2),
+('Lychee Tea', 23000, 'Teh dingin rasa leci menyegarkan.', 130, true, true, 2),
+('Peach Tea', 24000, 'Teh rasa buah persik lembut.', 120, false, false, 2),
+('Milk Tea', 25000, 'Teh dengan susu creamy khas Taiwan.', 140, true, true, 2),
+('Honey Lemon Tea', 26000, 'Teh lemon dengan madu alami.', 100, false, true, 2),
+('Earl Grey Tea', 22000, 'Teh hitam premium dengan aroma bergamot.', 90, false, false, 2),
 
-('Vanilla Milk', 25000, 'Susu rasa vanilla lembut dan manis.', 'M', 110, false, false, 'Cold', 3),
-('Honey Milk', 26000, 'Susu dengan madu alami.', 'M', 120, false, true, 'Cold', 3),
-('Almond Milk', 27000, 'Susu almond sehat tanpa laktosa.', 'L', 100, false, false, 'Cold', 3),
-('Coffee Milk', 28000, 'Perpaduan kopi dan susu manis.', 'L', 80, true, true, 'Cold', 3),
-('Mint Milk', 24000, 'Susu dengan aroma mint segar.', 'M', 90, false, false, 'Cold', 3),
+('Vanilla Milk', 25000, 'Susu rasa vanilla lembut dan manis.', 110, false, false, 3),
+('Honey Milk', 26000, 'Susu dengan madu alami.', 120, false, true, 3),
+('Almond Milk', 27000, 'Susu almond sehat tanpa laktosa.', 100, false, false, 3),
+('Coffee Milk', 28000, 'Perpaduan kopi dan susu manis.', 80, true, true, 3),
+('Mint Milk', 24000, 'Susu dengan aroma mint segar.', 90, false, false, 3),
 
-('Pineapple Juice', 25000, 'Jus nanas manis dan segar.', 'L', 130, false, false, 'Cold', 4),
-('Guava Juice', 26000, 'Jus jambu biji merah penuh vitamin.', 'L', 140, false, true, 'Cold', 4),
-('Kiwi Juice', 27000, 'Jus kiwi segar rasa asam manis.', 'M', 120, true, true, 'Cold', 4),
-('Papaya Juice', 23000, 'Jus pepaya lembut dan manis alami.', 'L', 150, false, false, 'Cold', 4),
-('Coconut Juice', 28000, 'Air kelapa muda alami menyegarkan.', 'L', 160, false, true, 'Cold', 4),
+('Pineapple Juice', 25000, 'Jus nanas manis dan segar.', 130, false, false, 4),
+('Guava Juice', 26000, 'Jus jambu biji merah penuh vitamin.', 140, false, true, 4),
+('Kiwi Juice', 27000, 'Jus kiwi segar rasa asam manis.', 120, true, true, 4),
+('Papaya Juice', 23000, 'Jus pepaya lembut dan manis alami.', 150, false, false, 4),
+('Coconut Juice', 28000, 'Air kelapa muda alami menyegarkan.', 160, false, true, 4),
 
-('Muffin Chocolate', 18000, 'Muffin lembut rasa cokelat.', 'M', 100, false, false, 'Warm', 5),
-('Blueberry Muffin', 19000, 'Muffin dengan potongan blueberry asli.', 'M', 110, false, true, 'Warm', 5),
-('Cinnamon Roll', 20000, 'Roti gulung manis dengan kayu manis.', 'L', 90, false, true, 'Warm', 5),
-('Brownies', 21000, 'Kue cokelat padat dan manis.', 'M', 80, true, true, 'Warm', 5),
-('Cheese Cake', 30000, 'Kue lembut dengan lapisan keju.', 'L', 70, false, true, 'Cold', 5);
+('Muffin Chocolate', 18000, 'Muffin lembut rasa cokelat.', 100, false, false, 5),
+('Blueberry Muffin', 19000, 'Muffin dengan potongan blueberry asli.', 110, false, true, 5),
+('Cinnamon Roll', 20000, 'Roti gulung manis dengan kayu manis.', 90, false, true, 5),
+('Brownies', 21000, 'Kue cokelat padat dan manis.', 80, true, true, 5),
+('Cheese Cake', 30000, 'Kue lembut dengan lapisan keju.', 70, false, true, 5);
 
 INSERT INTO category_product (name)
 VALUES
@@ -87,11 +87,11 @@ VALUES
 
 INSERT INTO image_products (image, product_id, created_at, updated_at)
 VALUES
-('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 53, NOW(), NOW()),
-('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 51, NOW(), NOW()),
-('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 57, NOW(), NOW()),
-('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 64, NOW(), NOW()),
-('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 75, NOW(), NOW());
+('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 1, NOW(), NOW()),
+('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 5, NOW(), NOW()),
+('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 5, NOW(), NOW()),
+('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 10, NOW(), NOW()),
+('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 11, NOW(), NOW());
 
 INSERT INTO diskons (percentage, name, start_date, end_date, isActive, created_at, updated_at)
 VALUES
@@ -103,19 +103,19 @@ VALUES
 
 INSERT INTO product_diskon (product_id, diskon_id, created_at, updated_at)
 VALUES
-(51, 1, NOW(), NOW()),
-(62, 2, NOW(), NOW()),
-(73, 3, NOW(), NOW()),
-(54, 4, NOW(), NOW()),
-(65, 5, NOW(), NOW());
+(5, 1, NOW(), NOW()),
+(2, 2, NOW(), NOW()),
+(7, 3, NOW(), NOW()),
+(4, 4, NOW(), NOW()),
+(6, 5, NOW(), NOW());
 
 INSERT INTO ratings (user_id, product_id, rating, created_at, updated_at)
 VALUES
-(6, 61, 5, NOW(), NOW()),
-(7, 62, 4, NOW(), NOW()),
-(8, 53, 5, NOW(), NOW()),
-(9, 74, 3, NOW(), NOW()),
-(6, 55, 4, NOW(), NOW());
+(6, 1, 5, NOW(), NOW()),
+(7, 6, 4, NOW(), NOW()),
+(8, 3, 5, NOW(), NOW()),
+(9, 7, 3, NOW(), NOW()),
+(6, 5, 4, NOW(), NOW());
 
 INSERT INTO orders (user_id, payment_method, status, total, created_at, updated_at)
 VALUES
@@ -127,11 +127,11 @@ VALUES
 
 INSERT INTO order_items (product_id, quantity, subtotal, order_id, created_at, updated_at)
 VALUES
-(51, 2, 40000, 1, NOW(), NOW()),
-(62, 1, 25000, 2, NOW(), NOW()),
-(63, 3, 60000, 3, NOW(), NOW()),
-(74, 1, 30000, 4, NOW(), NOW()),
-(55, 4, 80000, 5, NOW(), NOW());
+(1, 2, 40000, 1, NOW(), NOW()),
+(6, 1, 25000, 2, NOW(), NOW()),
+(3, 3, 60000, 3, NOW(), NOW()),
+(7, 1, 30000, 4, NOW(), NOW()),
+(5, 4, 80000, 5, NOW(), NOW());
 
 INSERT INTO deliverys (order_id, type, fee, created_at, updated_at)
 VALUES
@@ -148,3 +148,20 @@ VALUES
 (3, 'PPN', 3000, NOW(), NOW()),
 (4, 'PPN', 1500, NOW(), NOW()),
 (5, 'PPN', 3500, NOW(), NOW());
+
+INSERT INTO size_product (name, product_id, created_at, updated_at)
+VALUES
+  ('Small', 1, NOW(), NOW()),
+  ('Medium', 1, NOW(), NOW()),
+  ('Large', 1, NOW(), NOW());
+
+INSERT INTO variant (name, product_id, created_at, updated_at)
+VALUES
+  ('Hot', 1, NOW(), NOW()),
+  ('Iced', 1, NOW(), NOW()),
+  ('Hot', 2, NOW(), NOW()),
+  ('Cold', 2, NOW(), NOW()),
+  ('Sweet', 3, NOW(), NOW()),
+  ('Less Sugar', 3, NOW(), NOW()),
+  ('Strong', 4, NOW(), NOW()),
+  ('Mild', 4, NOW(), NOW());

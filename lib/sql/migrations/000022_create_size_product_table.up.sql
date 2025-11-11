@@ -1,0 +1,7 @@
+CREATE TABLE size_product (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(200),
+    product_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
