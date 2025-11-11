@@ -347,3 +347,20 @@ func (pc ProductController) Filter(ctx *gin.Context) {
 		Data:    response,
 	})
 }
+
+func (pc ProductController) DetailProduct(ctx *gin.Context){
+	product, err := respository.DetailProduct(pc.Pool, ctx)
+
+	if err != nil {
+		ctx.JSON(401, models.Response{
+			Success: false,
+			Message: "Failed to getting detail product",
+		})
+	}
+
+	ctx.JSON(200, models.Response{
+		Success: true,
+		Message: "Success get product detail",
+		Data:    product,
+	})
+}

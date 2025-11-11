@@ -9,15 +9,36 @@ type Product struct{
 	Name string `json:"name"`
 	Price float64 `json:"price"`
 	Description string `json:"description"`
-	Productsize string `json:"productSize"`
 	Stock int `json:"stock"`
 	Isflashsale *bool `json:"isFlashsale"`
 	IsFavorite_product *bool `json:"isFavoridProduct"`
-	Tempelatur string `json:"tempelatur"`
 	Category_productid int `json:"category_productId"`
 	Image string `json:"image"`
 	Created_at time.Time `json:"creaed_at"`
 	Updated_at time.Time `json:"updated_at"`
+}
+
+type SizeProduct struct{
+	Id int `json:"id"`
+	Name string `json:"size"`
+	ProductId int `json:"product_id"`
+	Created_at time.Time `json:"creaed_at"`
+	Updated_at time.Time `json:"updated_at"`
+}
+
+type Variant struct {
+	Id int `json:"id"`
+	Name string `json:"variant"`
+	ProductId int `json:"product_id"`
+	Created_at time.Time `json:"creaed_at"`
+	Updated_at time.Time `json:"updated_at"`
+}
+
+type ProductDetail struct {
+	Product  Product        `json:"product"`
+	Images   []ImageProduct `json:"images"`
+	Sizes    []SizeProduct  `json:"sizes"`
+	Variants []Variant      `json:"variants"`
 }
 
 type ProductInput struct {
