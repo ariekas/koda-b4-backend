@@ -28,7 +28,7 @@ func Register(ctx *gin.Context, pool *pgxpool.Pool) models.User {
 
 	now := time.Now()
 
-	_, err = pool.Exec(context.Background(), "INSERT INTO users (fullname, email, password, role, profileId, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)", input.Fullname, input.Email, hash, input.Role, input.Profileid, now, now)
+	_, err = pool.Exec(context.Background(), "INSERT INTO users (fullname, email, password, role, profile_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)", input.Fullname, input.Email, hash, input.Role, input.Profileid, now, now)
 
 	if err != nil {
 		fmt.Println("Error insert user:", err)
@@ -44,7 +44,7 @@ func Register(ctx *gin.Context, pool *pgxpool.Pool) models.User {
 func FindUserEmail(pool *pgxpool.Pool, email string) (models.User, error) {
 	var users models.User
 
-	row := pool.QueryRow(context.Background(), "SELECT id, fullname, email, password, role, profileId, created_at, updated_at FROM users WHERE email = $1", email)
+	row := pool.QueryRow(context.Background(), "SELECT id, fullname, email, password, role, profile_id, created_at, updated_at FROM users WHERE email = $1", email)
 
 	err := row.Scan(&users.Id, &users.Fullname, &users.Email, &users.Password, &users.Role, &users.Profileid, &users.Created_at, &users.Updated_at)
 
@@ -63,7 +63,7 @@ func VerifPassword(inputPassword string, hashPassword string) bool {
 	return ok
 }
 
-func UpdatePassword(pool *pgxpool.Pool, email string, newPassword string) error{
+func UpdatePassword(pool *pgxpool.Pool, email string, newPassword string) error {
 	argon := argon2.DefaultConfig()
 	hash, err := argon.HashEncoded([]byte(newPassword))
 	if err != nil {
@@ -76,6 +76,6 @@ func UpdatePassword(pool *pgxpool.Pool, email string, newPassword string) error{
 	if err != nil {
 		fmt.Println("Error updating password:", err)
 	}
-	
+
 	return nil
 }
