@@ -1,6 +1,13 @@
 # COffe Shop
 Backend coffe shop yang menghandel request yang di lakukan oleh user/front end
 
+## Redis
+Sebelum
+![alt text](/public/images/image-1.png)
+
+Sesudah
+![alt text](/public/images/image.png)
+
 ## Design sistem database
 ```mermaid
 erDiagram
