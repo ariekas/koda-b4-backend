@@ -6,7 +6,6 @@ type AddToCart struct {
 	SizeID     int     `json:"size_id"`
 	VariantID  int     `json:"variant_id"`
 	Quantity   int     `json:"quantity"`
-	Subtotal   float64 `json:"subtotal"`
 }
 
 type Cart struct {

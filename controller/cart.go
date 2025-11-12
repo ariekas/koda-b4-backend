@@ -13,41 +13,48 @@ type CartController struct {
 	Pool *pgxpool.Pool
 }
 
-func (cc CartController) AddCart(ctx *gin.Context)  {
+func (cc CartController) AddCart(ctx *gin.Context) {
 	userId := middelware.GetUserFromToken(ctx)
 
 	var req models.AddToCart
-
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(401, models.Response{
+		ctx.JSON(400, models.Response{
 			Success: false,
-			Message: "Error: Failed type request",
+			Message: "Error: Invalid request body",
 		})
 		return
 	}
 
-	err := respository.AddToCart(cc.Pool, userId, req.ProductID, req.SizeID, req.VariantID, req.Quantity, req.Subtotal)
+	item, status, orderId, err := respository.AddToCart(
+		cc.Pool,
+		userId,
+		req.ProductID,
+		req.SizeID,
+		req.VariantID,
+		req.Quantity,
+	)
+
 	if err != nil {
-		ctx.JSON(401, models.Response{
+		ctx.JSON(500, models.Response{
 			Success: false,
 			Message: "Error: Failed to create cart",
 		})
 		return
 	}
 
-	cart, err := respository.GetUserCart(cc.Pool, userId)
-	if err != nil {
-		ctx.JSON(404, models.Response{
-			Success: false,
-			Message: "Error : Failed to get user",
-		})
-		return
+	response := gin.H{
+		"order_id":     orderId,
+		"status":       status,
+		"product_name": item.ProductName,
+		"variant_name": item.VariantName,
+		"size_name":    item.SizeName,
+		"quantity":     item.Quantity,
 	}
 
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Success to create cart",
-		Data: cart,
+		Data:    response,
 	})
 }
 
