@@ -2,7 +2,7 @@
 CREATE TABLE products (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100),
-  price NUMERIC(10,2),
+  price DECIMAL(10,2),
   description TEXT,
   stock INT,
   isFlashSale BOOLEAN DEFAULT false,

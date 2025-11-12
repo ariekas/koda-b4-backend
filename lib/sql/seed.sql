@@ -111,19 +111,19 @@ VALUES
 
 INSERT INTO ratings (user_id, product_id, rating, created_at, updated_at)
 VALUES
-(6, 51, 5, NOW(), NOW()),
-(7, 56, 4, NOW(), NOW()),
-(8, 53, 5, NOW(), NOW()),
-(9, 57, 3, NOW(), NOW()),
-(10, 55, 4, NOW(), NOW());
+(1, 51, 5, NOW(), NOW()),
+(2, 56, 4, NOW(), NOW()),
+(3, 53, 5, NOW(), NOW()),
+(4, 57, 3, NOW(), NOW()),
+(5, 55, 4, NOW(), NOW());
 
 INSERT INTO orders (user_id, payment_method, status, total, created_at, updated_at)
 VALUES
-(6, 'Credit Card', 'completed', 120000, NOW(), NOW()),
-(7, 'Cash', 'pending', 85000, NOW(), NOW()),
-(8, 'Debit', 'completed', 95000, NOW(), NOW()),
-(9, 'E-Wallet', 'cancelled', 60000, NOW(), NOW()),
-(10, 'Credit Card', 'completed', 150000, NOW(), NOW());
+(1, 'Credit Card', 'completed', 120000, NOW(), NOW()),
+(2, 'Cash', 'pending', 85000, NOW(), NOW()),
+(3, 'Debit', 'completed', 95000, NOW(), NOW()),
+(4, 'E-Wallet', 'cancelled', 60000, NOW(), NOW()),
+(5, 'Credit Card', 'completed', 150000, NOW(), NOW());
 
 INSERT INTO order_items (product_id, quantity, subtotal, order_id, created_at, updated_at)
 VALUES
@@ -149,19 +149,16 @@ VALUES
 (9, 'PPN', 1500, NOW(), NOW()),
 (10, 'PPN', 3500, NOW(), NOW());
 
-INSERT INTO size_product (name, product_id, created_at, updated_at)
+INSERT INTO size_product (name, product_id, additional_costs, created_at, updated_at)
 VALUES
-  ('Small', 51, NOW(), NOW()),
-  ('Medium', 51, NOW(), NOW()),
-  ('Large', 51, NOW(), NOW());
+  ('Small', 51, 10000, NOW(), NOW()),
+  ('Medium', 51, 50000, NOW(), NOW()),
+  ('Large', 51, 12000, NOW(), NOW());
 
-INSERT INTO variant (name, product_id, created_at, updated_at)
+INSERT INTO variant (name, product_id, additional_costs, created_at, updated_at)
 VALUES
-  ('Hot', 51, NOW(), NOW()),
-  ('Iced', 51, NOW(), NOW()),
-  ('Hot', 52, NOW(), NOW()),
-  ('Cold', 52, NOW(), NOW()),
-  ('Sweet', 53, NOW(), NOW()),
-  ('Less Sugar', 53, NOW(), NOW()),
-  ('Strong', 54, NOW(), NOW()),
-  ('Mild', 54, NOW(), NOW());
+  ('Hot', 51, 32100, NOW(), NOW()),
+  ('Iced', 51,300, NOW(), NOW()),
+  ('Hot', 52, 3100, NOW(), NOW()),
+  ('Cold', 52, 2100, NOW(), NOW()),
+  ('Sweet', 53, 3500, NOW(), NOW());
