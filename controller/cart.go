@@ -26,8 +26,7 @@ func (cc CartController) AddCart(ctx *gin.Context) {
 		return
 	}
 
-	err := respository.AddToCart(cc.Pool, userID,req)
-	if err != nil {
+	if err := respository.AddToCart(cc.Pool, userID, req.ProductID, req.SizeID, req.SizeID, req.Quantity); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.Response{
 			Success: false,
 			Message: "Failed to add product to cart",
@@ -35,11 +34,11 @@ func (cc CartController) AddCart(ctx *gin.Context) {
 		return
 	}
 
-	cart, err := respository.GetUserCart(cc.Pool, userID)
+	cartItems, err := respository.GetUserCartProduct(cc.Pool, userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.Response{
 			Success: false,
-			Message: "Failed to fetch user cart",
+			Message: "Failed to fetch updated cart",
 		})
 		return
 	}
@@ -47,36 +46,7 @@ func (cc CartController) AddCart(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, models.Response{
 		Success: true,
 		Message: "Product added to cart successfully",
-		Data:    cart,
-	})
-}
-
-func (cc CartController) Checkout(ctx *gin.Context) {
-	userID := middelware.GetUserFromToken(ctx)
-	var req struct {
-		PaymentMethod string `json:"payment_method" binding:"required"`
-	}
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.Response{
-			Success: false,
-			Message: "Invalid request format",
-		})
-		return
-	}
-
-	err := respository.Checkout(cc.Pool, userID, req.PaymentMethod)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.Response{
-			Success: false,
-			Message: "Checkout failed",
-		})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, models.Response{
-		Success: true,
-		Message: "Checkout successful",
+		Data:    cartItems,
 	})
 }
 
@@ -90,7 +60,7 @@ func (cc CartController) GetCart(ctx *gin.Context) {
 		return
 	}
 
-	cartItems, err := respository.GetUserCartProducts(cc.Pool, userID)
+	cartItems, err := respository.GetUserCartProduct(cc.Pool, userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.Response{
 			Success: false,
