@@ -92,7 +92,7 @@ func CreateProduct(pool *pgxpool.Pool, input models.ProductInput) (models.Produc
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
 	`, input.Name, input.Price, input.Description, input.Stock, input.IsFlashSale, false, input.CategoryProductId, now, now)
 	if err != nil {
-		fmt.Println("failed to insert product: %v", err)
+		fmt.Println("failed to insert product", err)
 	}
 
 	var productId int
