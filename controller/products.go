@@ -83,7 +83,24 @@ func (pc ProductController) GetProducts(ctx *gin.Context) {
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products [post]
 func (pc ProductController) CreateProduct(ctx *gin.Context) {
-	product := respository.Create(ctx, pc.Pool)
+	var input models.ProductInput
+
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "Invalid input",
+		})
+		return
+	}
+
+	product, err := respository.CreateProduct(pc.Pool, input)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "Error : Failed to create product",
+		})
+		return
+	}
 
 	redis := config.Redis()
 	iter := redis.Scan(context.Background(), 0 ,"/products*", 0).Iterator()
@@ -114,7 +131,20 @@ func (pc ProductController) CreateProduct(ctx *gin.Context) {
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products/{id} [patch]
 func (pc ProductController) EditProduct(ctx *gin.Context) {
-	newProduct, err := respository.Edit(pc.Pool, ctx)
+	id := ctx.Param("id")
+	productId, _ := strconv.Atoi(id)
+	
+	var input models.ProductInput
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "Invalid input",
+		})
+		return
+	}
+
+	
+	newProduct, err := respository.EditProduct(pc.Pool, productId, input)
 
 	if err != nil {
 		if err.Error() == "product not found" {
@@ -152,7 +182,9 @@ func (pc ProductController) EditProduct(ctx *gin.Context) {
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products/{id} [delete]
 func (pc ProductController) DeleteProduct(ctx *gin.Context) {
-	err := respository.Delete(pc.Pool, ctx)
+	id := ctx.Param("id")
+	productId,_ := strconv.Atoi(id)
+	err := respository.DeleteProduct(pc.Pool, productId)
 
 	if err != nil {
 		ctx.JSON(404, models.Response{
@@ -202,7 +234,7 @@ func (pc ProductController) CreateImageProduct(ctx *gin.Context) {
 		return
 	}
 
-	imageProduct, err := respository.CreateImageProduct(pc.Pool, ctx, productId, files)
+	imageProduct, err := respository.CreateImageProduct(pc.Pool, productId, files)
 	if err != nil {
 		ctx.JSON(401, models.Response{
 			Success: false,
@@ -218,7 +250,7 @@ func (pc ProductController) CreateImageProduct(ctx *gin.Context) {
 }
 
 func (pc ProductController) GetAllImageProduct(ctx *gin.Context) {
-	images, err := respository.GetAllImageProduct(pc.Pool)
+	images, err := respository.GetAllImageProducts(pc.Pool)
 
 	if err != nil {
 		ctx.JSON(400, models.Response{
@@ -290,32 +322,22 @@ func (pc ProductController) Filter(ctx *gin.Context) {
 	name := ctx.Query("name")
 	categoryStr := ctx.Query("category")
 	sortBy := ctx.Query("sort_by")
-	priceMin := ctx.Query("price_min")
-	priceMax := ctx.Query("price_max")
-	pageQuery := ctx.Query("page")
-	limitQuery := ctx.Query("limit")
-
-	page := 1
-	limit := 20
-	if p, err := strconv.Atoi(pageQuery); err == nil && p > 0 {
-		page = p
-	}
-	if l, err := strconv.Atoi(limitQuery); err == nil && l > 0 {
-		limit = l
-	}
+	priceMin, _ := strconv.ParseFloat(ctx.Query("price_min"), 64)
+	priceMax, _ := strconv.ParseFloat(ctx.Query("price_max"), 64)
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "20"))
 
 	data, total, err := respository.FilterProducts(pc.Pool, name, categoryStr, sortBy, priceMin, priceMax, page, limit)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.Response{
 			Success: false,
-			Message: fmt.Sprintf("Error: %v", err),
+			Message: fmt.Sprintf("Failed filtering products: %v", err),
 		})
 		return
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
-
-	baseURL := fmt.Sprintf("/products/filter?name=%s&category=%s&sort_by=%s&price_min=%s&price_max=%s&limit=%d",
+	baseURL := fmt.Sprintf("/products/filter?name=%s&category=%s&sort_by=%s&price_min=%v&price_max=%v&limit=%d",
 		name, categoryStr, sortBy, priceMin, priceMax, limit,
 	)
 
@@ -332,24 +354,24 @@ func (pc ProductController) Filter(ctx *gin.Context) {
 		links["next"] = fmt.Sprintf("%s&page=%d", baseURL, page+1)
 	}
 
-	response := respository.PaginationResponse{
-		Data:       data,
-		Page:       page,
-		Limit:      limit,
-		Total:      total,
-		TotalPages: totalPages,
-		Links:      links,
-	}
-
 	ctx.JSON(http.StatusOK, models.Response{
 		Success: true,
 		Message: "Success filtering products",
-		Data:    response,
+		Data: respository.PaginationResponse{
+			Data:       data,
+			Page:       page,
+			Limit:      limit,
+			Total:      total,
+			TotalPages: totalPages,
+			Links:      links,
+		},
 	})
 }
 
 func (pc ProductController) DetailProduct(ctx *gin.Context){
-	product, err := respository.DetailProduct(pc.Pool, ctx)
+	id := ctx.Param("id")
+	productId,_ := strconv.Atoi(id)
+	product, err := respository.DetailProduct(pc.Pool, productId)
 
 	if err != nil {
 		ctx.JSON(401, models.Response{

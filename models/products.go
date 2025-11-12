@@ -4,58 +4,57 @@ import (
 	"time"
 )
 
-type Product struct{
-	Id int `json:"id"`
-	Name string `json:"name"`
-	Price float64 `json:"price"`
-	Description string `json:"description"`
-	Stock int `json:"stock"`
-	Isflashsale *bool `json:"isFlashsale"`
-	IsFavorite_product *bool `json:"isFavoridProduct"`
-	Category_productid int `json:"category_productId"`
-	Image string `json:"image"`
-	Created_at time.Time `json:"creaed_at"`
-	Updated_at time.Time `json:"updated_at"`
+type Product struct {
+	Id                 int       `json:"id"`
+	Name               string    `json:"name"`
+	Price              float64   `json:"price"`
+	Description        string    `json:"description"`
+	Stock              int       `json:"stock"`
+	IsFlashSale        bool      `json:"is_flashsale"`
+	IsFavoriteProduct  bool      `json:"is_favorite_product"`
+	CategoryProductId  int       `json:"category_products_id"`
+	Image              string    `json:"image"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
 }
 
-type SizeProduct struct{
-	Id int `json:"id"`
-	Name string `json:"size"`
-	ProductId int `json:"product_id"`
-	Created_at time.Time `json:"creaed_at"`
-	Updated_at time.Time `json:"updated_at"`
+type SizeProduct struct {
+	Id        int       `json:"id"`
+	Name      string    `json:"name"`
+	ProductId int       `json:"product_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type Variant struct {
-	Id int `json:"id"`
-	Name string `json:"variant"`
-	ProductId int `json:"product_id"`
-	Created_at time.Time `json:"creaed_at"`
-	Updated_at time.Time `json:"updated_at"`
-}
-
-type ProductDetail struct {
-	Product  Product        `json:"product"`
-	Images   []ImageProduct `json:"images"`
-	Sizes    []SizeProduct  `json:"sizes"`
-	Variants []Variant      `json:"variants"`
-}
-
-type ProductInput struct {
-	Name               string  `json:"name" binding:"required,min=3" example:"Cappuccino"`
-	Price              float64 `json:"price" binding:"required,gt=0" example:"25000"`
-	Description        string  `json:"description" binding:"required" example:"Coffee with milk and foam"`
-	Productsize        string  `json:"productSize" binding:"required,oneof=Small Medium Large" example:"Medium"`
-	Stock              int     `json:"stock" binding:"required,gte=0" example:"20"`
-	Isflashsale        *bool   `json:"isFlashsale" example:"false"`
-	Tempelatur         string  `json:"tempelatur" binding:"required,oneof=Hot Cold" example:"Hot"`
-	Category_productid int     `json:"category_productId" binding:"required,gt=0" example:"1"`
+type VariantProduct struct {
+	Id        int       `json:"id"`
+	Name      string    `json:"name"`
+	ProductId int       `json:"product_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type ImageProduct struct {
-	Id         int       `json:"id" binding:"required"`
-	Productid  int       `json:"productId" binding:"required"`
-	Image      string    `json:"image" binding:"required"`
-	Created_at time.Time `json:"created_at" binding:"required"`
-	Updated_at time.Time `json:"updated_at" binding:"required"`
+	Id        int       `json:"id"`
+	ProductId int       `json:"product_id"`
+	Image     string    `json:"image"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+type ProductDetail struct {
+	Product  Product         `json:"product"`
+	Images   []ImageProduct  `json:"images"`
+	Sizes    []SizeProduct   `json:"sizes"`
+	Variants []VariantProduct `json:"variants"`
+}
+
+type ProductInput struct {
+	Name               string  `json:"name" binding:"required,min=3"`
+	Price              float64 `json:"price" binding:"required,gt=0"`
+	Description        string  `json:"description" binding:"required"`
+	ProductSize        string  `json:"product_size" binding:"required,oneof=Small Medium Large"`
+	Stock              int     `json:"stock" binding:"required,gte=0"`
+	IsFlashSale        *bool   `json:"is_flashsale"`
+	Temperature        string  `json:"temperature" binding:"required,oneof=Hot Cold"`
+	CategoryProductId  int     `json:"category_products_id" binding:"required,gt=0"`
 }

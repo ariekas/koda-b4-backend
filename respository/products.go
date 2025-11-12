@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -26,7 +25,7 @@ type PaginationResponse struct {
 }
 
 func GetProducts(pool *pgxpool.Pool, page int) (PaginationResponse, error) {
-	var dataProduct []models.Product
+	var products []models.Product
 	limit := 50
 	offset := (page - 1) * limit
 
@@ -37,55 +36,46 @@ func GetProducts(pool *pgxpool.Pool, page int) (PaginationResponse, error) {
 	}
 
 	rows, err := pool.Query(context.Background(), `
-		SELECT p.id, p.name, p.price, p.description, p.stock, 
-		       p.isFlashSale, p.isFavorite_product,  p.category_product_id, 
-		       COALESCE(ip.image, '') AS image,
-		       p.created_at, p.updated_at
-		FROM products p
-		LEFT JOIN image_products ip ON ip.product_id = p.id
-		ORDER BY p.id
-		OFFSET $1 LIMIT $2
+	SELECT p.id, p.name, p.price, p.description, p.stock, 
+	       p.is_flashsale, p.is_favorite_product, p.category_products_id, 
+	       COALESCE(ip.image, '') AS image,
+	       p.created_at, p.updated_at
+	FROM products p
+	LEFT JOIN product_images ip ON ip.products_id = p.id
+	ORDER BY p.id
+	OFFSET $1 LIMIT $2
 	`, offset, limit)
 	if err != nil {
 		fmt.Println("Error: Failed get data product", err)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
-		var product models.Product
-		err := rows.Scan(
-			&product.Id,
-			&product.Name,
-			&product.Price,
-			&product.Description,
-			&product.Stock,
-			&product.Isflashsale,
-			&product.IsFavorite_product,
-			&product.Category_productid,
-			&product.Image,
-			&product.Created_at,
-			&product.Updated_at,
-		)
-		if err != nil {
+		var p models.Product
+		if err := rows.Scan(&p.Id, &p.Name, &p.Price, &p.Description, &p.Stock,
+			&p.IsFlashSale, &p.IsFavoriteProduct, &p.CategoryProductId, &p.Image,
+			&p.CreatedAt, &p.UpdatedAt); err != nil {
 			fmt.Println("Error scanning product:", err)
+			continue
 		}
-		dataProduct = append(dataProduct, product)
+		products = append(products, p)
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
-	links := make(map[string]string)
-
+	links := map[string]string{}
 	if page > 1 {
 		links["prev"] = fmt.Sprintf("/products?page=%d", page-1)
 	} else {
 		links["prev"] = "null"
 	}
-
 	if page < totalPages {
 		links["next"] = fmt.Sprintf("/products?page=%d", page+1)
+	} else {
+		links["next"] = "null"
 	}
 
 	return PaginationResponse{
-		Data:       dataProduct,
+		Data:       products,
 		Page:       page,
 		Limit:      limit,
 		Total:      total,
@@ -94,114 +84,102 @@ func GetProducts(pool *pgxpool.Pool, page int) (PaginationResponse, error) {
 	}, nil
 }
 
-func Create(ctx *gin.Context, pool *pgxpool.Pool) models.Product {
-	var input models.Product
-	if err := ctx.BindJSON(&input); err != nil {
-		fmt.Println("Error: Invalid JSON type", err)
-	}
-
+func CreateProduct(pool *pgxpool.Pool, input models.ProductInput) (models.Product, error) {
 	now := time.Now()
 	_, err := pool.Exec(context.Background(), `
-		INSERT INTO products (name, price, description,  stock, isFlashSale, isfavorite_product,  category_product_id, created_at, updated_at)
+		INSERT INTO products 
+		(name, price, description, stock, is_flashsale, is_favorite_product, category_products_id, created_at, updated_at)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-	`, input.Name, input.Price, input.Description,  input.Stock, input.Isflashsale, input.IsFavorite_product, input.Category_productid, now, now)
+	`, input.Name, input.Price, input.Description, input.Stock, input.IsFlashSale, false, input.CategoryProductId, now, now)
+	if err != nil {
+		fmt.Println("failed to insert product: %v", err)
+	}
 
+	var productId int
+	err = pool.QueryRow(context.Background(), "SELECT id FROM products WHERE name=$1 ORDER BY id DESC LIMIT 1", input.Name).Scan(&productId)
 	if err != nil {
 		fmt.Println("Error inserting product:", err)
 	}
 
-	input.Created_at = now
-	input.Updated_at = now
-	return input
+	product := models.Product{
+		Id:                productId,
+		Name:              input.Name,
+		Price:             input.Price,
+		Description:       input.Description,
+		Stock:             input.Stock,
+		IsFlashSale:       *input.IsFlashSale,
+		IsFavoriteProduct: false,
+		CategoryProductId: input.CategoryProductId,
+		CreatedAt:         now,
+		UpdatedAt:         now,
+	}
+	return product, nil
 }
 
-func GetById(ctx *gin.Context, pool *pgxpool.Pool) (models.Product, error) {
-	id := ctx.Param("id")
-	var product models.Product
-
+func GetProductByID(pool *pgxpool.Pool, id int) (models.Product, error) {
+	var p models.Product
 	err := pool.QueryRow(context.Background(), `
-		SELECT id, name, price, description,  stock, isFlashSale, isFavorite_product, category_product_id, created_at, updated_at
-		FROM products
-		WHERE id = $1
-	`, id).Scan(&product.Id, &product.Name, &product.Price, &product.Description,  &product.Stock, &product.Isflashsale, &product.IsFavorite_product, &product.Category_productid, &product.Created_at, &product.Updated_at)
-
-	return product, err
+	SELECT id, name, price, description, stock, is_flashsale, is_favorite_product, category_products_id, created_at, updated_at
+	FROM products WHERE id=$1
+	`, id).Scan(&p.Id, &p.Name, &p.Price, &p.Description, &p.Stock, &p.IsFlashSale, &p.IsFavoriteProduct, &p.CategoryProductId, &p.CreatedAt, &p.UpdatedAt)
+	if err != nil {
+		fmt.Println("Error : Failed to get product by id", err)
+	}
+	return p, nil
 }
 
-func Edit(pool *pgxpool.Pool, ctx *gin.Context) (models.Product, error) {
-	id := ctx.Param("id")
-
-	oldProduct, err := GetById(ctx, pool)
-
+func EditProduct(pool *pgxpool.Pool, id int, input models.ProductInput) (models.Product, error) {
+	old, err := GetProductByID(pool, id)
 	if err != nil {
 		return models.Product{}, fmt.Errorf("product not found")
 	}
 
-	var newProduct models.Product
+	if input.Name == "" {
+		input.Name = old.Name
+	}
+	if input.Price == 0 {
+		input.Price = old.Price
+	}
+	if input.Description == "" {
+		input.Description = old.Description
+	}
+	if input.Stock == 0 {
+		input.Stock = old.Stock
+	}
+	if input.IsFlashSale == nil {
+		input.IsFlashSale = &old.IsFlashSale
+	}
+	if input.CategoryProductId == 0 {
+		input.CategoryProductId = old.CategoryProductId
+	}
 
-	err = ctx.BindJSON(&newProduct)
-
+	_, err = pool.Exec(context.Background(), `
+	UPDATE products 
+	SET name=$1, price=$2, description=$3, stock=$4, is_flashsale=$5, category_products_id=$6, updated_at=NOW()
+	WHERE id=$7
+	`, input.Name, input.Price, input.Description, input.Stock, *input.IsFlashSale, input.CategoryProductId, id)
 	if err != nil {
-		fmt.Println("Error : Failed type request much json type")
+		return models.Product{}, err
 	}
 
-	if newProduct.Name == "" {
-		newProduct.Name = oldProduct.Name
-	}
-	if newProduct.Price == 0 {
-		newProduct.Price = oldProduct.Price
-	}
-	if newProduct.Description == "" {
-		newProduct.Description = oldProduct.Description
-	}
-	if newProduct.Stock == 0 {
-		newProduct.Stock = oldProduct.Stock
-	}
-	if newProduct.Isflashsale == nil {
-		newProduct.Isflashsale = oldProduct.Isflashsale
-	}
-	if newProduct.IsFavorite_product == nil {
-		newProduct.IsFavorite_product = oldProduct.IsFavorite_product
-	}
-	if newProduct.Category_productid == 0 {
-		newProduct.Category_productid = oldProduct.Category_productid
-	}
-
-	_, err = pool.Exec(context.Background(),
-		`UPDATE products 
-     SET name=$1, price=$2, description=$3, stock=$4, 
-         isflashsale=$5, isfavorite_product=$6, category_product_id=$7, updated_at=NOW() 
-     WHERE id = $8`,
-		newProduct.Name, newProduct.Price, newProduct.Description,
-		newProduct.Stock, *newProduct.Isflashsale, *newProduct.IsFavorite_product,
-		 newProduct.Category_productid, id)
-
-	return newProduct, err
+	return GetProductByID(pool, id)
 }
 
-func Delete(pool *pgxpool.Pool, ctx *gin.Context) error {
-	id := ctx.Param("id")
-	_, err := pool.Exec(context.Background(), "DELETE FROM products WHERE id = $1", id)
-
+func DeleteProduct(pool *pgxpool.Pool, id int) error {
+	_, err := pool.Exec(context.Background(), "DELETE FROM products WHERE id=$1", id)
 	return err
 }
 
-func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, files []*multipart.FileHeader) ([]models.ImageProduct, error) {
-	var inputImage []models.ImageProduct
+func CreateImageProduct(pool *pgxpool.Pool, productId int, files []*multipart.FileHeader) ([]models.ImageProduct, error) {
+	var images []models.ImageProduct
 	now := time.Now()
 	maxSize := int64(5 * 1024 * 1024)
-	allowedTypes := map[string]bool{
-		".jpg":  true,
-		".jpeg": true,
-		".png":  true,
-		".webp": true,
-	}
+	allowedTypes := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
 
 	for _, file := range files {
 		if file.Size > maxSize {
 			fmt.Printf("file %s melebihi ukuran maksimum 5MB", file.Filename)
 		}
-
 		ext := strings.ToLower(filepath.Ext(file.Filename))
 		if !allowedTypes[ext] {
 			fmt.Printf("file %s bukan tipe gambar yang diizinkan (hanya jpg, jpeg, png, webp)", file.Filename)
@@ -214,171 +192,140 @@ func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, fil
 
 		filePath := fmt.Sprintf("imagesProduct/%s", file.Filename)
 
-		err = saveUploadedFile(file, filePath)
+		err = SaveUploadedFile(file, filePath)
 		if err != nil {
 			fmt.Println("Error :", err)
 		}
 
-		_, err = pool.Exec(context.Background(), "INSERT INTO imageproduct (product_id, image, created_at, updated_at) VALUES ($1, $2, $3, $4)", productId, filePath, now, now)
-
+		_, err = pool.Exec(context.Background(), `
+		INSERT INTO product_images (products_id, image, created_at, updated_at)
+		VALUES ($1,$2,$3,$4)
+		`, productId, filePath, now, now)
 		if err != nil {
 			fmt.Println("Error: Failed to create image prodct", err)
 		}
 
-		inputImage = append(inputImage, models.ImageProduct{
-			Productid:  productId,
-			Image:      filePath,
-			Created_at: now,
-			Updated_at: now,
+		images = append(images, models.ImageProduct{
+			ProductId: productId,
+			Image:     filePath,
+			CreatedAt: now,
+			UpdatedAt: now,
 		})
 	}
-	return inputImage, nil
-}
-
-func GetAllImageProduct(pool *pgxpool.Pool) ([]models.ImageProduct, error) {
-	var images []models.ImageProduct
-
-	rows, err := pool.Query(context.Background(), "SELECT id, product_id, image, created_at, updated_at  FROM image_products ORDER BY id ASC")
-
-	if err != nil {
-		fmt.Println("Error : Failed to get all image product", err)
-	}
-
-	for rows.Next() {
-		var img models.ImageProduct
-		err := rows.Scan(&img.Id, &img.Productid, &img.Image, &img.Created_at, &img.Updated_at)
-		if err != nil {
-			fmt.Println("Error scanning image product:", err)
-		}
-		images = append(images, img)
-	}
-
 	return images, nil
 }
 
-func DeleteImageProduct(pool *pgxpool.Pool, id int) error {
-	var imagePath string
-
-	err := pool.QueryRow(context.Background(), "SELECT image FROM image_products WHERE id = $1", id).Scan(&imagePath)
-	if err != nil {
-		fmt.Println("image not found:", err)
-	}
-
-	err = os.Remove(imagePath)
-	if err != nil {
-		fmt.Println("Error: Failed to delete image:", err)
-	}
-
-	_, err = pool.Exec(context.Background(), "DELETE FROM image_products WHERE id = $1", id)
-	if err != nil {
-		fmt.Println("failed to delete image product:", err)
-	}
-
-	return nil
-}
-
-func saveUploadedFile(file *multipart.FileHeader, path string) error {
+func SaveUploadedFile(file *multipart.FileHeader, path string) error {
 	src, err := file.Open()
 	if err != nil {
 		return err
 	}
 	defer src.Close()
-
 	dst, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	defer dst.Close()
-
 	_, err = io.Copy(dst, src)
 	return err
 }
 
-func GetProductFavorite(pool *pgxpool.Pool, limit int) ([]models.Product, int, error) {
-	var products []models.Product
+func GetAllImageProducts(pool *pgxpool.Pool) ([]models.ImageProduct, error) {
+	var images []models.ImageProduct
+	rows, err := pool.Query(context.Background(), "SELECT id, products_id, image, created_at, updated_at FROM product_images")
+	if err != nil {
+		return images, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var img models.ImageProduct
+		rows.Scan(&img.Id, &img.ProductId, &img.Image, &img.CreatedAt, &img.UpdatedAt)
+		images = append(images, img)
+	}
+	return images, nil
+}
 
-	if limit < 4 {
+
+func DeleteImageProduct(pool *pgxpool.Pool, id int) error {
+	var path string
+	err := pool.QueryRow(context.Background(), "SELECT image FROM product_images WHERE id=$1", id).Scan(&path)
+	if err != nil {
+		return err
+	}
+	os.Remove(path)
+	_, err = pool.Exec(context.Background(), "DELETE FROM product_images WHERE id=$1", id)
+	return err
+}
+
+func GetProductFavorite(pool *pgxpool.Pool, limit int) ([]models.Product, int, error) {
+	if limit < 1 {
 		limit = 4
 	}
-
 	var total int
-	err := pool.QueryRow(context.Background(),
-		"SELECT COUNT(*) FROM products WHERE isFavorite_product = true").Scan(&total)
+	err := pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM products WHERE is_favorite_product=true").Scan(&total)
 	if err != nil {
 		return nil, 0, fmt.Errorf("error counting favorite products: %v", err)
 	}
 
 	rows, err := pool.Query(context.Background(), `
-		SELECT 
-			p.id,
-			p.name,
-			p.description,
-			p.price,
-			COALESCE(ip.image, '') AS image
-		FROM products p
-		LEFT JOIN image_products ip ON ip.product_id = p.id
-		WHERE p.isFavorite_product = true
-		GROUP BY p.id, ip.image
-		ORDER BY p.id
-		LIMIT $1
+	SELECT p.id, p.name, p.price, p.description, p.stock, p.is_flashsale, p.is_favorite_product, p.category_products_id, COALESCE(ip.image,'') as image, p.created_at, p.updated_at
+	FROM products p
+	LEFT JOIN product_images ip ON ip.products_id=p.id
+	WHERE p.is_favorite_product=true
+	ORDER BY p.id ASC
+	LIMIT $1
 	`, limit)
 	if err != nil {
 		return nil, 0, fmt.Errorf("error fetching favorite products: %v", err)
 	}
 	defer rows.Close()
 
+	var products []models.Product
 	for rows.Next() {
 		var p models.Product
-		err := rows.Scan(&p.Id, &p.Name, &p.Description, &p.Price, &p.Image)
-		if err != nil {
-			fmt.Println("Error scanning product:", err)
-			continue
-		}
+		rows.Scan(&p.Id, &p.Name, &p.Price, &p.Description, &p.Stock, &p.IsFlashSale, &p.IsFavoriteProduct, &p.CategoryProductId, &p.Image, &p.CreatedAt, &p.UpdatedAt)
 		products = append(products, p)
 	}
-
 	return products, total, nil
 }
 
-func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy, priceMin, priceMax string, page, limit int) ([]models.Product, int, error) {
-	var products []models.Product
+func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy string, priceMin, priceMax float64, page, limit int) ([]models.Product, int, error) {
+	if limit <= 0 {
+		limit = 10
+	}
 	offset := (page - 1) * limit
 
 	query := `
-	SELECT 
-			p.id, p.name, p.price, p.description, 
-			p.product_size, p.stock, p.isFlashSale, p.isFavorite_product, 
-			p.temperature, p.category_product_id, COALESCE(ip.image, '') AS image
-		FROM products p
-		LEFT JOIN image_products ip ON ip.product_id = p.id
-		WHERE 1=1
+	SELECT p.id, p.name, p.price, p.description, p.stock, p.is_flashsale, p.is_favorite_product, p.category_products_id, COALESCE(ip.image,'') AS image, p.created_at, p.updated_at
+	FROM products p
+	LEFT JOIN product_images ip ON ip.products_id=p.id
+	WHERE 1=1
 	`
 	args := []interface{}{}
-	argIndex := 1
-
+	argIdx := 1
 	if name != "" {
-		query += fmt.Sprintf("AND LOWER(p.name) LIKE LOWER($%d)", argIndex)
+		query += fmt.Sprintf(" AND LOWER(p.name) LIKE LOWER($%d)", argIdx)
 		args = append(args, "%"+name+"%")
-		argIndex++
+		argIdx++
 	}
 
 	if categoryStr != "" {
-		categorys := strings.Split(categoryStr, ",")
-		query += fmt.Sprintf(" AND p.category_product_id = ANY($%d)", argIndex)
-		args = append(args, categorys)
-		argIndex++
+		categories := strings.Split(categoryStr, ",")
+		query += fmt.Sprintf(" AND p.category_products_id = ANY($%d)", argIdx)
+		args = append(args, categories)
+		argIdx++
 	}
 
-	if priceMin != "" {
-		query += fmt.Sprintf(" AND p.price >= $%d", argIndex)
+
+	if priceMin > 0 {
+		query += fmt.Sprintf(" AND p.price >= $%d", argIdx)
 		args = append(args, priceMin)
-		argIndex++
+		argIdx++
 	}
-
-	if priceMax != "" {
-		query += fmt.Sprintf(" AND p.price <= $%d", argIndex)
+	if priceMax > 0 {
+		query += fmt.Sprintf(" AND p.price <= $%d", argIdx)
 		args = append(args, priceMax)
-		argIndex++
+		argIdx++
 	}
 
 	switch sortBy {
@@ -392,18 +339,20 @@ func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy, priceMin, pri
 		query += " ORDER BY p.id ASC"
 	}
 
-	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
+	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
 	args = append(args, limit, offset)
 
 	rows, err := pool.Query(context.Background(), query, args...)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("failed to fetch filtered products: %v", err)
 	}
 	defer rows.Close()
 
+	var products []models.Product
 	for rows.Next() {
 		var p models.Product
-		err := rows.Scan(&p.Id, &p.Name, &p.Price, &p.Description, &p.Stock, &p.Isflashsale, &p.IsFavorite_product, &p.Category_productid, &p.Image)
+		err := rows.Scan(&p.Id, &p.Name, &p.Price, &p.Description, &p.Stock,
+			&p.IsFlashSale, &p.IsFavoriteProduct, &p.CategoryProductId, &p.Image, &p.CreatedAt, &p.UpdatedAt)
 		if err != nil {
 			fmt.Println("Error scanning product:", err)
 			continue
@@ -413,7 +362,7 @@ func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy, priceMin, pri
 
 	countQuery := "SELECT COUNT(*) FROM products p WHERE 1=1"
 	countArgs := []interface{}{}
-	argIdx := 1
+	argIdx = 1
 
 	if name != "" {
 		countQuery += fmt.Sprintf(" AND LOWER(p.name) LIKE LOWER($%d)", argIdx)
@@ -422,16 +371,16 @@ func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy, priceMin, pri
 	}
 	if categoryStr != "" {
 		categories := strings.Split(categoryStr, ",")
-		countQuery += fmt.Sprintf(" AND p.category_product_id = ANY($%d)", argIdx)
+		countQuery += fmt.Sprintf(" AND p.category_products_id = ANY($%d)", argIdx)
 		countArgs = append(countArgs, categories)
 		argIdx++
 	}
-	if priceMin != "" {
+	if priceMin > 0 {
 		countQuery += fmt.Sprintf(" AND p.price >= $%d", argIdx)
 		countArgs = append(countArgs, priceMin)
 		argIdx++
 	}
-	if priceMax != "" {
+	if priceMax > 0 {
 		countQuery += fmt.Sprintf(" AND p.price <= $%d", argIdx)
 		countArgs = append(countArgs, priceMax)
 		argIdx++
@@ -440,93 +389,48 @@ func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy, priceMin, pri
 	var total int
 	err = pool.QueryRow(context.Background(), countQuery, countArgs...).Scan(&total)
 	if err != nil {
-		fmt.Println("Error :", err)
+		fmt.Println("Error counting filtered products:", err)
 	}
 
 	return products, total, nil
 }
 
-func DetailProduct(pool *pgxpool.Pool, ctx *gin.Context) (models.ProductDetail, error) {
-	id := ctx.Param("id")
-	var product models.Product
 
-	err := pool.QueryRow(context.Background(), `
-		SELECT id, name, price, description, stock, isFlashSale, isFavorite_product, category_product_id, created_at, updated_at
-		FROM products
-		WHERE id = $1
-	`, id).Scan(
-		&product.Id,
-		&product.Name,
-		&product.Price,
-		&product.Description,
-		&product.Stock,
-		&product.Isflashsale,
-		&product.IsFavorite_product,
-		&product.Category_productid,
-		&product.Created_at,
-		&product.Updated_at,
-	)
+func DetailProduct(pool *pgxpool.Pool, id int) (models.ProductDetail, error) {
+	var detail models.ProductDetail
+	product, err := GetProductByID(pool, id)
 	if err != nil {
-		fmt.Println("failed get product:", err)
+		return detail, err
 	}
 
-	rowsImage, err := pool.Query(context.Background(), `
-		SELECT id, image, product_id, created_at, updated_at
-		FROM image_products
-		WHERE product_id = $1
-	`, id)
-	if err != nil {
-		fmt.Println("failed get image:", err)
-	}
+	detail.Product = product
 
+	rowsImg, _ := pool.Query(context.Background(), "SELECT id, products_id, image, created_at, updated_at FROM product_images WHERE products_id=$1", id)
 	var images []models.ImageProduct
-	for rowsImage.Next() {
+	for rowsImg.Next() {
 		var img models.ImageProduct
-		if err := rowsImage.Scan(&img.Id, &img.Image, &img.Productid, &img.Created_at, &img.Updated_at); err == nil {
-			images = append(images, img)
-		}
+		rowsImg.Scan(&img.Id, &img.ProductId, &img.Image, &img.CreatedAt, &img.UpdatedAt)
+		images = append(images, img)
 	}
+	detail.Images = images
 
-	rowsSize, err := pool.Query(context.Background(), `
-		SELECT id, name, product_id, created_at, updated_at
-		FROM size_product
-		WHERE product_id = $1
-	`, id)
-	if err != nil {
-		fmt.Println("failed get size_product: ", err)
-	}
-
+	rowsSize, _ := pool.Query(context.Background(), "SELECT id, name, product_id, created_at, updated_at FROM size_products WHERE product_id=$1", id)
 	var sizes []models.SizeProduct
 	for rowsSize.Next() {
 		var s models.SizeProduct
-		if err := rowsSize.Scan(&s.Id, &s.Name, &s.ProductId, &s.Created_at, &s.Updated_at); err == nil {
-			sizes = append(sizes, s)
-		}
+		rowsSize.Scan(&s.Id, &s.Name, &s.ProductId, &s.CreatedAt, &s.UpdatedAt)
+		sizes = append(sizes, s)
 	}
+	detail.Sizes = sizes
 
-	rowsVariant, err := pool.Query(context.Background(), `
-		SELECT id, name, product_id, created_at, updated_at
-		FROM variant
-		WHERE product_id = $1
-	`, id)
-	if err != nil {
-		fmt.Println("failed get variant: ", err)
-	}
-
-	var variants []models.Variant
+	rowsVariant, _ := pool.Query(context.Background(), "SELECT id, name, product_id, created_at, updated_at FROM variant_products WHERE product_id=$1", id)
+	var variants []models.VariantProduct
 	for rowsVariant.Next() {
-		var v models.Variant
-		if err := rowsVariant.Scan(&v.Id, &v.Name, &v.ProductId, &v.Created_at, &v.Updated_at); err == nil {
-			variants = append(variants, v)
-		}
+		var v models.VariantProduct
+		rowsVariant.Scan(&v.Id, &v.Name, &v.ProductId, &v.CreatedAt, &v.UpdatedAt)
+		variants = append(variants, v)
 	}
+	detail.Variants = variants
 
-	result := models.ProductDetail{
-		Product:  product,
-		Images:   images,
-		Sizes:    sizes,
-		Variants: variants,
-	}
-
-	return result, nil
+	return detail, nil
 }
