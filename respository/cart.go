@@ -17,7 +17,7 @@ func AddToCart(pool *pgxpool.Pool, userId int, productId int, sizeId int, varian
 		SELECT price FROM products WHERE id=$1
 	`, productId).Scan(&basePrice)
 	if err != nil {
-		return fmt.Errorf("product not found: %v", err)
+		 fmt.Println("product not found", err)
 	}
 
 	if sizeId != 0 {
@@ -45,7 +45,7 @@ func AddToCart(pool *pgxpool.Pool, userId int, productId int, sizeId int, varian
 			WHERE id = $2
 		`, quantity, existingCartID)
 		if err != nil {
-			return fmt.Errorf("failed to update cart: %v", err)
+			 fmt.Println("failed to update cart", err)
 		}
 	} else {
 		_, err := pool.Exec(ctx, `
@@ -53,64 +53,11 @@ func AddToCart(pool *pgxpool.Pool, userId int, productId int, sizeId int, varian
 			VALUES ($1, $2, $3, $4, $5)
 		`, userId, productId, sizeId, variantId, quantity)
 		if err != nil {
-			return fmt.Errorf("failed to add to cart: %v", err)
+			 fmt.Println("failed to add to cart", err)
 		}
 	}
 
 	return nil
-}
-
-func GetUserCart(pool *pgxpool.Pool, userId int) ([]models.CartItem, error) {
-	ctx := context.Background()
-	var cartItems []models.CartItem
-
-	rows, err := pool.Query(ctx, `
-		SELECT 
-			c.id,
-			p.name AS product_name,
-			COALESCE(sp.name, '') AS size_name,
-			COALESCE(vp.name, '') AS variant_name,
-			p.price,
-			COALESCE(sp.additional_costs, 0),
-			COALESCE(vp.additional_costs, 0),
-			c.quantity,
-			(p.price + COALESCE(sp.additional_costs,0) + COALESCE(vp.additional_costs,0)) * c.quantity AS subtotal,
-			COALESCE(pi.image, '')
-		FROM carts c
-		JOIN products p ON p.id = c.products_id
-		LEFT JOIN size_products sp ON sp.id = c.size_products_id
-		LEFT JOIN variant_products vp ON vp.id = c.variant_products_id
-		LEFT JOIN product_images pi ON pi.products_id = p.id
-		WHERE c.users_id=$1
-		GROUP BY c.id, p.name, p.price, sp.name, sp.additional_costs, vp.name, vp.additional_costs, pi.image, c.quantity
-	`, userId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch cart: %v", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var item models.CartItem
-		err := rows.Scan(
-			&item.ID,
-			&item.ProductName,
-			&item.SizeName,
-			&item.VariantName,
-			&item.Price,
-			&item.SizeCost,
-			&item.VariantCost,
-			&item.Quantity,
-			&item.Subtotal,
-			&item.ImageURL,
-		)
-		if err != nil {
-			fmt.Println("Error: scan cart items", err)
-			continue
-		}
-		cartItems = append(cartItems, item)
-	}
-
-	return cartItems, nil
 }
 
 func GetUserCartProduct(pool *pgxpool.Pool, userId int) ([]models.CartItem, error) {
@@ -119,27 +66,32 @@ func GetUserCartProduct(pool *pgxpool.Pool, userId int) ([]models.CartItem, erro
 
 	rows, err := pool.Query(ctx, `
 		SELECT 
-			oi.id,
+			c.id,
 			p.id AS product_id,
 			p.name AS product_name,
 			COALESCE(sp.id, 0) AS size_id,
 			COALESCE(sp.name, '') AS size_name,
-			COALESCE(v.id, 0) AS variant_id,
-			COALESCE(v.name, '') AS variant_name,
-			oi.quantity,
-			oi.subtotal,
+			COALESCE(vp.id, 0) AS variant_id,
+			COALESCE(vp.name, '') AS variant_name,
+			c.quantity,
+			(p.price 
+				+ COALESCE(sp.additional_costs, 0) 
+				+ COALESCE(vp.additional_costs, 0)
+			) * c.quantity AS subtotal,
 			COALESCE(pi.image, '') AS image_url
-		FROM order_items oi
-		JOIN orders o ON o.id = oi.order_id
-		JOIN products p ON oi.product_id = p.id
-		LEFT JOIN size_product sp ON oi.size_product_id = sp.id
-		LEFT JOIN variant v ON oi.variant_id = v.id
-		LEFT JOIN image_products pi ON pi.product_id = p.id
-		WHERE o.user_id = $1 AND o.status = 'pending'
-		GROUP BY oi.id, p.id, p.name, sp.id, sp.name, v.id, v.name, pi.image
+		FROM carts c
+		JOIN products p ON c.products_id = p.id
+		LEFT JOIN size_products sp ON c.size_products_id = sp.id
+		LEFT JOIN variant_products vp ON c.variant_products_id = vp.id
+		LEFT JOIN product_images pi ON pi.products_id = p.id
+		WHERE c.users_id = $1
+		GROUP BY 
+			c.id, p.id, p.name, sp.id, sp.name, vp.id, vp.name, pi.image, 
+			p.price, sp.additional_costs, vp.additional_costs, c.quantity
 	`, userId)
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to query cart items: %w", err)
+		fmt.Println("failed to query cart items", err)
 	}
 	defer rows.Close()
 
@@ -157,14 +109,14 @@ func GetUserCartProduct(pool *pgxpool.Pool, userId int) ([]models.CartItem, erro
 			&item.Subtotal,
 			&item.ImageURL,
 		)
+
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan cart item: %w", err)
+			fmt.Println("failed to scan cart item:", err)
 		}
 		items = append(items, item)
 	}
-
 	if rows.Err() != nil {
-		return nil, fmt.Errorf("error iterating rows: %w", rows.Err())
+		fmt.Println("error iterating rows:", rows.Err())
 	}
 
 	return items, nil

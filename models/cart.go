@@ -24,9 +24,6 @@ type CartItem struct {
 	VariantID    int     `json:"variant_id,omitempty"`
 	VariantName  string  `json:"variant_name,omitempty"`
 	Quantity     int     `json:"quantity"`
-	Price        float64 `json:"price"`        
-	SizeCost     float64 `json:"size_cost"`    
-	VariantCost  float64 `json:"variant_cost"` 
 	Subtotal     float64 `json:"subtotal"`      
 	ImageURL     string  `json:"image_url,omitempty"`
 }
