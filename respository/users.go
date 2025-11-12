@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 type PaginationResponseUser struct {
@@ -29,78 +28,68 @@ func GetDataUsers(pool *pgxpool.Pool, page int) (PaginationResponseUser, error) 
 		fmt.Println("Error counting users:", err)
 	}
 
-	rows, err := pool.Query(context.Background(), `SELECT 
-		  u.id AS user_id,
-		  u.fullname,
-		  u.email,
-		  p.pic,
-		  p.phone,
-		  p.address
-		FROM users u
-		LEFT JOIN profile p ON u.profile_id = p.id
-		ORDER BY u.id
-		OFFSET $1 LIMIT $2
-	`, offset, limit)
-
+	rows, err := pool.Query(
+		context.Background(),
+		`SELECT u.id, u.fullname, u.email, u.role, u.profile_id,
+		        p.pic, p.phone, p.address, u.created_at, u.updated_at
+		 FROM users u
+		 LEFT JOIN profile p ON u.profile_id = p.id
+		 ORDER BY u.id
+		 OFFSET $1 LIMIT $2`,
+		offset, limit,
+	)
 	if err != nil {
 		fmt.Println("Error: Failed get data users", err)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var user models.User
-		err := rows.Scan(
+		if err := rows.Scan(
 			&user.Id,
 			&user.Fullname,
 			&user.Email,
+			&user.Role,
+			&user.ProfileID,
 			&user.Pic,
-			&user.Phone,	
+			&user.Phone,
 			&user.Address,
-		)
-		if err != nil {
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		); err != nil {
 			fmt.Println("Error scanning user:", err)
+			continue
 		}
 		dataUser = append(dataUser, user)
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 	links := make(map[string]string)
-
 	if page > 1 {
-		links["prev"] = fmt.Sprintf("/products?page=%d", page-1)
+		links["prev"] = fmt.Sprintf("/users?page=%d", page-1)
 	} else {
 		links["prev"] = "null"
 	}
-
 	if page < totalPages {
-		links["next"] = fmt.Sprintf("/products?page=%d", page+1)
+		links["next"] = fmt.Sprintf("/users?page=%d", page+1)
 	}
 
-	response := PaginationResponseUser{
+	return PaginationResponseUser{
 		Data:       dataUser,
 		Page:       page,
 		Limit:      limit,
 		Total:      total,
 		TotalPages: totalPages,
 		Links:      links,
-	}
-
-
-	return response, nil
+	}, nil
 }
 
-func DeleteUser(pool *pgxpool.Pool, ctx *gin.Context) error {
-	id := ctx.Param("id")
-	_, err := pool.Exec(context.Background(), "DELETE FROM users WHERE id = $1", id)
-
+func DeleteUser(pool *pgxpool.Pool, userId int) error {
+	_, err := pool.Exec(context.Background(), "DELETE FROM users WHERE id = $1", userId)
 	return err
 }
 
-func UpdateRole(pool *pgxpool.Pool, ctx *gin.Context, userId int, newRole string) error {
+func UpdateRole(pool *pgxpool.Pool, userId int, newRole string) error {
 	_, err := pool.Exec(context.Background(), "UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2", newRole, userId)
-
-	if err != nil {
-		fmt.Println("Error: Failed to update role user ",err)
-	}
-
-	return nil
+	return err
 }

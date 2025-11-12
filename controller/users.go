@@ -61,7 +61,9 @@ func (uc UserController) GetUsers(ctx *gin.Context){
 // @Failure 404 {object} models.Response "User not found"
 // @Router /users/{id} [delete]
 func (uc UserController) DeleteUser(ctx *gin.Context){
-	err := respository.DeleteUser(uc.Pool, ctx)
+	id := ctx.Param("id")
+	userId,_ := strconv.Atoi(id)
+	err := respository.DeleteUser(uc.Pool, userId)
 
 	if err != nil {
 		ctx.JSON(401, models.Response{
@@ -91,7 +93,6 @@ func (uc UserController) DeleteUser(ctx *gin.Context){
 // @Router /users/role/{id} [patch]
 func (uc UserController) UpdateRole(ctx *gin.Context){
 	id := ctx.Param("id")
-
 	userId, err := strconv.Atoi(id)
 	if err != nil {
 		fmt.Println("Error : failed to converd type data")
@@ -103,7 +104,7 @@ func (uc UserController) UpdateRole(ctx *gin.Context){
 		fmt.Println("Error: ", err)
 	}
 
-	err = respository.UpdateRole(uc.Pool,ctx, userId, models. InputNewRole.Role)
+	err = respository.UpdateRole(uc.Pool, userId, models.InputNewRole.Role)
 
 	if err != nil {
 		ctx.JSON(401, models.Response{

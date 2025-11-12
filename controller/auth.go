@@ -27,8 +27,15 @@ type AuthController struct {
 // @Failure 500 {object} models.Response "Internal server error"
 // @Router /register [post]
 func (ac AuthController) Register(ctx *gin.Context) {
-	user := respository.Register(ctx, ac.Pool)
+	user, err := respository.Register(ctx, ac.Pool)
 
+	if err != nil {
+		ctx.JSON(201, models.Response{
+			Success: true,
+			Message: "Error: Failed to register",
+		})
+	}
+	
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Success register",

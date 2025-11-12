@@ -4,7 +4,6 @@ import (
 	"back-end-coffeShop/models"
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,45 +11,70 @@ import (
 	"github.com/matthewhartstonge/argon2"
 )
 
-func Register(ctx *gin.Context, pool *pgxpool.Pool) models.User {
-	var input models.User
-	argon := argon2.DefaultConfig()
-
+func Register(ctx *gin.Context, pool *pgxpool.Pool) (models.User, error) {
+	var input models.RegisterRequest
 	err := ctx.BindJSON(&input)
 	if err != nil {
 		fmt.Println("Error: Invalid type much json")
 	}
 
+	argon := argon2.DefaultConfig()
 	hash, err := argon.HashEncoded([]byte(input.Password))
 	if err != nil {
 		fmt.Println("Error : Failed to hash password")
 	}
 
 	now := time.Now()
+	var profileID *int = nil
 
-	_, err = pool.Exec(context.Background(), "INSERT INTO users (fullname, email, password, role, profile_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)", input.Fullname, input.Email, hash, input.Role, input.Profileid, now, now)
-
+	_, err = pool.Exec(
+		context.Background(),
+		`INSERT INTO users (fullname, email, password, role, profile_id, created_at, updated_at) 
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		input.Fullname, input.Email, hash, input.Role, profileID, now, now,
+	)
 	if err != nil {
 		fmt.Println("Error insert user:", err)
 	}
 
-	input.Password = string(hash)
-	input.Created_at = &now
-	input.Updated_at = &now
+	user := models.User{
+		Fullname:  input.Fullname,
+		Email:     input.Email,
+		Password:  string(hash),
+		Role:      input.Role,
+		ProfileID: profileID,
+		CreatedAt: &now,
+		UpdatedAt: &now,
+	}
 
-	return input
+	return user, nil
 }
 
 func FindUserEmail(pool *pgxpool.Pool, email string) (models.User, error) {
-	var users models.User
+	var user models.User
 
-	row := pool.QueryRow(context.Background(), "SELECT id, fullname, email, password, role, profile_id, created_at, updated_at FROM users WHERE email = $1", email)
+	row := pool.QueryRow(context.Background(),`
+		SELECT u.id, u.fullname, u.email, u.password, u.role, u.profile_id,
+		       p.pic, p.phone, p.address, u.created_at, u.updated_at
+		FROM users u
+		LEFT JOIN profile p ON u.profile_id = p.id
+		WHERE u.email = $1
+	`,email)
 
-	err := row.Scan(&users.Id, &users.Fullname, &users.Email, &users.Password, &users.Role, &users.Profileid, &users.Created_at, &users.Updated_at)
-
-	users.Password = strings.TrimSpace(users.Password)
-
-	return users, err
+	err := row.Scan(
+		&user.Id,
+		&user.Fullname,
+		&user.Email,
+		&user.Password,
+		&user.Role,
+		&user.ProfileID,
+		&user.Pic,
+		&user.Phone,
+		&user.Address,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	return user, err
 }
 
 func VerifPassword(inputPassword string, hashPassword string) bool {
