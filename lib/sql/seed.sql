@@ -87,11 +87,11 @@ VALUES
 
 INSERT INTO image_products (image, product_id, created_at, updated_at)
 VALUES
-('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 1, NOW(), NOW()),
-('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 5, NOW(), NOW()),
-('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 5, NOW(), NOW()),
-('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 10, NOW(), NOW()),
-('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 11, NOW(), NOW());
+('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 51, NOW(), NOW()),
+('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 53, NOW(), NOW()),
+('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 54, NOW(), NOW()),
+('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 52, NOW(), NOW()),
+('https://images.pexels.com/photos/33984951/pexels-photo-33984951.jpeg', 53, NOW(), NOW());
 
 INSERT INTO diskons (percentage, name, start_date, end_date, isActive, created_at, updated_at)
 VALUES
@@ -103,65 +103,65 @@ VALUES
 
 INSERT INTO product_diskon (product_id, diskon_id, created_at, updated_at)
 VALUES
-(5, 1, NOW(), NOW()),
-(2, 2, NOW(), NOW()),
-(7, 3, NOW(), NOW()),
-(4, 4, NOW(), NOW()),
-(6, 5, NOW(), NOW());
+(55, 1, NOW(), NOW()),
+(52, 2, NOW(), NOW()),
+(57, 3, NOW(), NOW()),
+(54, 4, NOW(), NOW()),
+(56, 5, NOW(), NOW());
 
 INSERT INTO ratings (user_id, product_id, rating, created_at, updated_at)
 VALUES
-(6, 1, 5, NOW(), NOW()),
-(7, 6, 4, NOW(), NOW()),
-(8, 3, 5, NOW(), NOW()),
-(9, 7, 3, NOW(), NOW()),
-(6, 5, 4, NOW(), NOW());
+(6, 51, 5, NOW(), NOW()),
+(7, 56, 4, NOW(), NOW()),
+(8, 53, 5, NOW(), NOW()),
+(9, 57, 3, NOW(), NOW()),
+(10, 55, 4, NOW(), NOW());
 
 INSERT INTO orders (user_id, payment_method, status, total, created_at, updated_at)
 VALUES
 (6, 'Credit Card', 'completed', 120000, NOW(), NOW()),
 (7, 'Cash', 'pending', 85000, NOW(), NOW()),
 (8, 'Debit', 'completed', 95000, NOW(), NOW()),
-(8, 'E-Wallet', 'cancelled', 60000, NOW(), NOW()),
-(6, 'Credit Card', 'completed', 150000, NOW(), NOW());
+(9, 'E-Wallet', 'cancelled', 60000, NOW(), NOW()),
+(10, 'Credit Card', 'completed', 150000, NOW(), NOW());
 
 INSERT INTO order_items (product_id, quantity, subtotal, order_id, created_at, updated_at)
 VALUES
-(1, 2, 40000, 1, NOW(), NOW()),
-(6, 1, 25000, 2, NOW(), NOW()),
-(3, 3, 60000, 3, NOW(), NOW()),
-(7, 1, 30000, 4, NOW(), NOW()),
-(5, 4, 80000, 5, NOW(), NOW());
+(51, 2, 40000, 6, NOW(), NOW()),
+(56, 1, 25000, 7, NOW(), NOW()),
+(53, 3, 60000, 8, NOW(), NOW()),
+(57, 1, 30000, 9, NOW(), NOW()),
+(55, 4, 80000, 10, NOW(), NOW());
 
 INSERT INTO deliverys (order_id, type, fee, created_at, updated_at)
 VALUES
-(1, 'Regular', 10000, NOW(), NOW()),
-(2, 'Express', 15000, NOW(), NOW()),
-(3, 'Pickup', 0, NOW(), NOW()),
-(4, 'Regular', 10000, NOW(), NOW()),
-(5, 'Express', 15000, NOW(), NOW());
+(6, 'Regular', 10000, NOW(), NOW()),
+(7, 'Express', 15000, NOW(), NOW()),
+(8, 'Pickup', 0, NOW(), NOW()),
+(9, 'Regular', 10000, NOW(), NOW()),
+(10, 'Express', 15000, NOW(), NOW());
 
 INSERT INTO taxs (order_id, name, tax, created_at, updated_at)
 VALUES
-(1, 'PPN', 2000, NOW(), NOW()),
-(2, 'PPN', 2500, NOW(), NOW()),
-(3, 'PPN', 3000, NOW(), NOW()),
-(4, 'PPN', 1500, NOW(), NOW()),
-(5, 'PPN', 3500, NOW(), NOW());
+(6, 'PPN', 2000, NOW(), NOW()),
+(7, 'PPN', 2500, NOW(), NOW()),
+(8, 'PPN', 3000, NOW(), NOW()),
+(9, 'PPN', 1500, NOW(), NOW()),
+(10, 'PPN', 3500, NOW(), NOW());
 
 INSERT INTO size_product (name, product_id, created_at, updated_at)
 VALUES
-  ('Small', 1, NOW(), NOW()),
-  ('Medium', 1, NOW(), NOW()),
-  ('Large', 1, NOW(), NOW());
+  ('Small', 51, NOW(), NOW()),
+  ('Medium', 51, NOW(), NOW()),
+  ('Large', 51, NOW(), NOW());
 
 INSERT INTO variant (name, product_id, created_at, updated_at)
 VALUES
-  ('Hot', 1, NOW(), NOW()),
-  ('Iced', 1, NOW(), NOW()),
-  ('Hot', 2, NOW(), NOW()),
-  ('Cold', 2, NOW(), NOW()),
-  ('Sweet', 3, NOW(), NOW()),
-  ('Less Sugar', 3, NOW(), NOW()),
-  ('Strong', 4, NOW(), NOW()),
-  ('Mild', 4, NOW(), NOW());
+  ('Hot', 51, NOW(), NOW()),
+  ('Iced', 51, NOW(), NOW()),
+  ('Hot', 52, NOW(), NOW()),
+  ('Cold', 52, NOW(), NOW()),
+  ('Sweet', 53, NOW(), NOW()),
+  ('Less Sugar', 53, NOW(), NOW()),
+  ('Strong', 54, NOW(), NOW()),
+  ('Mild', 54, NOW(), NOW());
