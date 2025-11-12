@@ -78,7 +78,7 @@ func (ac AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
-	token, err := middelware.GenerateToken(jwtToken, users.Role)
+	token, err := middelware.GenerateToken(jwtToken, users.Role, users.Id)
 	if err != nil {
 		fmt.Println("Error: Failed to generate token")
 	} 
