@@ -15,5 +15,6 @@ func UserRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
 	r.GET("/products/filter", productController.Filter)
 	r.GET("/product/:id", productController.DetailProduct)
 	r.POST("/cart", cartController.AddCart)
+	r.GET("/cart", cartController.GetCart)
 	
 }

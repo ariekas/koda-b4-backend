@@ -109,3 +109,48 @@ func Checkout(pool *pgxpool.Pool, userId int, paymentMethod string) error {
 
 	return err
 }
+
+func GetUserCartProduct(pool *pgxpool.Pool, userId int) ([]models.CartItems, error) {
+	var items []models.CartItems
+
+	rows, err := pool.Query(context.Background(), `
+		SELECT 
+			oi.id,
+			p.name AS product_name,
+			COALESCE(sp.name, '') AS size_name,
+			COALESCE(v.name, '') AS variant_name,
+			oi.quantity,
+			oi.subtotal,
+			COALESCE(pi.image, '') AS image
+		FROM order_items oi
+		JOIN orders o ON o.id = oi.order_id
+		JOIN products p ON oi.product_id = p.id
+		LEFT JOIN size_product sp ON oi.size_product_id = sp.id
+		LEFT JOIN variant v ON oi.variant_id = v.id
+		LEFT JOIN image_products pi ON pi.product_id = p.id
+		WHERE o.user_id=$1 AND o.status='pending'
+		GROUP BY oi.id, p.name, sp.name, v.name, pi.image
+	`, userId)
+	if err != nil {
+		fmt.Println("Error: Failed to get data cart", err)
+	}
+
+	for rows.Next() {
+		var item models.CartItems
+		err := rows.Scan(
+			&item.ID,
+			&item.ProductName,
+			&item.SizeName,
+			&item.VariantName,
+			&item.Quantity,
+			&item.Subtotal,
+			&item.ImageURL,
+		)
+		if err != nil {
+			fmt.Println("Error: Failed to scan cart items", err)
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
+}

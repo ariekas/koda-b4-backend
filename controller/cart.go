@@ -79,3 +79,30 @@ func (cc CartController) Checkout(ctx *gin.Context) {
 		Message: "Checkout success",
 	})
 }
+
+func (cc CartController) GetCart(ctx *gin.Context) {
+	userId := middelware.GetUserFromToken(ctx)
+
+	if userId == 0 {
+		ctx.JSON(401, models.Response{
+			Success: false,
+			Message: "Unauthorized: Invalid token",
+		})
+		return
+	}
+
+	Cartitems, err := respository.GetUserCartProduct(cc.Pool, userId)
+	if err != nil {
+		ctx.JSON(404, models.Response{
+			Success: false,
+			Message: "Error: Failed to get user cart",
+		})
+		return
+	}
+
+	ctx.JSON(200, models.Response{
+		Success: true,
+		Message: "Success get cart",
+		Data:    Cartitems,
+	})
+}

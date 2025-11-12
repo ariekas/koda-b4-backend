@@ -23,4 +23,5 @@ type CartItems struct {
 	VariantName string  `json:"variant_name"`
 	Quantity    int     `json:"quantity"`
 	Subtotal    float64 `json:"subtotal"`
+	ImageURL    string  `json:"image_url"`
 }
