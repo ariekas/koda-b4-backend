@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -176,5 +177,72 @@ func UpdateTransactionStatus(pool *pgxpool.Pool, transactionId int, newStatus st
 	if err != nil {
 		fmt.Println("Error updating transaction status:", err)
 	}
+	return err
+}
+
+func GetCartTransaction(pool *pgxpool.Pool, userID int) ([]models.CartItems, error) {
+	query := `
+	SELECT c.products_id, c.variant_products_id, c.size_products_id, c.quantity,
+		p.price AS product_price,
+		COALESCE(v.additional_costs, 0) AS variant_cost,
+		COALESCE(s.additional_costs, 0) AS size_cost
+		FROM carts c
+		JOIN products p ON c.products_id = p.id
+		LEFT JOIN variant_products v ON c.variant_products_id = v.id
+		LEFT JOIN size_products s ON c.size_products_id = s.id
+		WHERE c.users_id = $1
+	`
+	rows, err := pool.Query(context.Background(), query, userID)
+	if err != nil {
+		fmt.Println("Error: Failed to get cart")
+	}
+
+	defer rows.Close()
+
+	var items []models.CartItems
+
+	for rows.Next() {
+		var item models.CartItems
+
+		rows.Scan(&item.ProductID, &item.VariantProductID, &item.SizeProductID, &item.Quantity, &item.ProductPrice, &item.VariantCost, &item.SizeCost)
+		items = append(items, item)
+	}
+	return items, nil
+}
+
+func GetDelivery(pool *pgxpool.Pool, deliveryID int) (float64, error) {
+	var price float64
+
+	err := pool.QueryRow(context.Background(), "SELECT price FROM deliverys WHERE id=$1", deliveryID).Scan(&price)
+
+	return price, err
+}
+
+func CreateTransaction(pool *pgxpool.Pool, userID int, input models.TransactionInput, total float64, invoice string, tx pgx.Tx) (int, error) {
+	var id int
+
+	err := tx.QueryRow(context.Background(), `
+		INSERT INTO transactions (users_id, deliverys_id, payment_methods_id, 
+			name_user, address_user, phone_user, email_user, total, payment_status, invoice_num)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9)
+		RETURNING id
+	`, userID, input.DeliveryID, input.PaymentMethodID, input.NameUser,
+		input.AddressUser, input.PhoneUser, input.EmailUser, total, invoice).Scan(&id)
+
+	return id, err
+}
+
+func CreateTransactionItem(pool *pgxpool.Pool,tx pgx.Tx, transactionID int, item models.CartItems, subtotal float64) error{
+	_, err := tx.Exec(context.Background(), `
+	INSERT INTO transaction_items (transactions_id, products_id, quantity, subtotal, variant_products_id, size_products_id)
+	VALUES ($1, $2, $3, $4, $5, $6)
+`, transactionID, item.ProductID, item.Quantity, subtotal, item.VariantProductID, item.SizeProductID)
+
+return err
+}
+
+func ClearCart(pool *pgxpool.Pool,tx pgx.Tx, userID int) error {
+	_, err := tx.Exec(context.Background(), `DELETE FROM carts WHERE users_id=$1`, userID)
+
 	return err
 }

@@ -38,3 +38,29 @@ type PaginationResponseTransaction struct {
 	TotalPages int                 `json:"total_pages"`
 	Links      map[string]string   `json:"links"`
 }
+
+type TransactionInput struct {
+	DeliveryID      int     `json:"delivery_id" binding:"required"`
+	PaymentMethodID int     `json:"payment_method_id" binding:"required"`
+	NameUser        string  `json:"name_user" binding:"required"`
+	AddressUser     string  `json:"address_user" binding:"required"`
+	PhoneUser       string  `json:"phone_user" binding:"required"`
+	EmailUser       string  `json:"email_user" binding:"required"`
+}
+
+type CartItems struct {
+	ProductID        int
+	VariantProductID int
+	SizeProductID    int
+	Quantity         int
+	ProductPrice     float64
+	VariantCost      float64
+	SizeCost         float64
+}
+
+
+type TransactionResponse struct {
+	Invoice       string  `json:"invoice"`
+	Total         float64 `json:"total"`
+	PaymentStatus string  `json:"payment_status"`
+}

@@ -1,11 +1,14 @@
 package controller
 
 import (
+	"back-end-coffeShop/lib/middelware"
 	"back-end-coffeShop/models"
 	"back-end-coffeShop/respository"
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -121,5 +124,75 @@ func (tc TransactionsController) UpdateTransactionStatus(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, models.Response{
 		Success: true,
 		Message: "Success updating transaction status",
+	})
+}
+
+func (tc TransactionsController) CreateTransaction(ctx *gin.Context) {
+	userID := middelware.GetUserFromToken(ctx)
+
+	carts, err := respository.GetCartTransaction(tc.Pool, userID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if len(carts) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Cart kosong"})
+		return
+	}
+
+	var input models.TransactionInput
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	total := 0.0
+	for _, item := range carts {
+		subtotal := (item.ProductPrice + item.VariantCost + item.SizeCost) * float64(item.Quantity)
+		total += subtotal
+	}
+
+	deliveryPrice, _ := respository.GetDelivery(tc.Pool, input.DeliveryID)
+	total += deliveryPrice
+
+	invoice := fmt.Sprintf("INV-%d", time.Now().Unix())
+
+	tx, err := tc.Pool.Begin(context.Background())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mulai transaksi"})
+		return
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback(context.Background())
+		} else {
+			tx.Commit(context.Background())
+		}
+	}()
+
+	txID, err := respository.CreateTransaction(tc.Pool,userID, input,total,invoice,tx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat transaksi"})
+		return
+	}
+
+	for _, item := range carts {
+		subtotal := (item.ProductPrice + item.VariantCost + item.SizeCost) * float64(item.Quantity)
+		if err := respository.CreateTransactionItem(tc.Pool,tx, txID, item,subtotal); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menambah item transaksi"})
+			return
+		}
+	}
+
+	if err := respository.ClearCart(tc.Pool, tx, userID); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus cart"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, models.TransactionResponse{
+		Invoice:       invoice,
+		Total:         total,
+		PaymentStatus: "pending",
 	})
 }
