@@ -159,7 +159,7 @@ func (tc TransactionsController) CreateTransaction(ctx *gin.Context) {
 
 	tx, err := tc.Pool.Begin(context.Background())
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mulai transaksi"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memulai transaksi"})
 		return
 	}
 
@@ -171,15 +171,15 @@ func (tc TransactionsController) CreateTransaction(ctx *gin.Context) {
 		}
 	}()
 
-	txID, err := respository.CreateTransaction(tc.Pool,userID, input,total,invoice,tx)
+	txID, err := respository.CreateTransaction(tc.Pool, userID, input, total, invoice, tx)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat transaksi"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	for _, item := range carts {
 		subtotal := (item.ProductPrice + item.VariantCost + item.SizeCost) * float64(item.Quantity)
-		if err := respository.CreateTransactionItem(tc.Pool,tx, txID, item,subtotal); err != nil {
+		if err := respository.CreateTransactionItem(tc.Pool, tx, txID, item, subtotal); err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menambah item transaksi"})
 			return
 		}

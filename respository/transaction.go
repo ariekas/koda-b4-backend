@@ -219,30 +219,120 @@ func GetDelivery(pool *pgxpool.Pool, deliveryID int) (float64, error) {
 }
 
 func CreateTransaction(pool *pgxpool.Pool, userID int, input models.TransactionInput, total float64, invoice string, tx pgx.Tx) (int, error) {
+	ctx := context.Background()
 	var id int
 
-	err := tx.QueryRow(context.Background(), `
+	profileData, err := GetProfileByUser(pool, userID)
+	if err != nil {
+		fmt.Printf("gagal mengambil data profil: %v", err)
+	}
+
+	nameUser := input.NameUser
+	if nameUser == "" {
+		nameUser = profileData.Fullname
+	}
+
+	addressUser := input.AddressUser
+	if addressUser == "" {
+		addressUser = profileData.Address
+	}
+
+	phoneUser := input.PhoneUser
+	if phoneUser == "" {
+		phoneUser = profileData.Phone
+	}
+
+	emailUser := input.EmailUser
+	if emailUser == "" {
+		emailUser = profileData.Email
+	}
+
+	if nameUser == "" || addressUser == "" || emailUser == "" {
+		fmt.Printf("data user tidak lengkap: pastikan nama, alamat, dan email tersedia")
+	}
+
+	err = tx.QueryRow(ctx, `
 		INSERT INTO transactions (users_id, deliverys_id, payment_methods_id, 
 			name_user, address_user, phone_user, email_user, total, payment_status, invoice_num)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9)
 		RETURNING id
-	`, userID, input.DeliveryID, input.PaymentMethodID, input.NameUser,
-		input.AddressUser, input.PhoneUser, input.EmailUser, total, invoice).Scan(&id)
+	`, userID, input.DeliveryID, input.PaymentMethodID,
+		nameUser, addressUser, phoneUser, emailUser, total, invoice).Scan(&id)
 
-	return id, err
+	if err != nil {
+	fmt.Printf("gagal membuat transaksi: %v", err)
+	}
+
+	return id, nil
 }
 
-func CreateTransactionItem(pool *pgxpool.Pool,tx pgx.Tx, transactionID int, item models.CartItems, subtotal float64) error{
-	_, err := tx.Exec(context.Background(), `
-	INSERT INTO transaction_items (transactions_id, products_id, quantity, subtotal, variant_products_id, size_products_id)
-	VALUES ($1, $2, $3, $4, $5, $6)
-`, transactionID, item.ProductID, item.Quantity, subtotal, item.VariantProductID, item.SizeProductID)
+func CreateTransactionItem(pool *pgxpool.Pool, tx pgx.Tx, transactionID int, item models.CartItems, subtotal float64) error {
+	ctx := context.Background()
 
-return err
+	var currentStock int
+	err := tx.QueryRow(ctx, `
+		SELECT stock FROM products WHERE id = $1
+	`, item.ProductID).Scan(&currentStock)
+	if err != nil {
+		return fmt.Errorf("failed to get current stock for product ID %d: %v", item.ProductID, err)
+	}
+
+	if currentStock < item.Quantity {
+		return fmt.Errorf("insufficient stock for product ID %d: available %d, requested %d",
+			item.ProductID, currentStock, item.Quantity)
+	}
+
+	_, err = tx.Exec(ctx, `
+		UPDATE products
+		SET stock = stock - $1
+		WHERE id = $2
+	`, item.Quantity, item.ProductID)
+	if err != nil {
+		return fmt.Errorf("failed to update product stock: %v", err)
+	}
+
+	_, err = tx.Exec(ctx, `
+		INSERT INTO transaction_items 
+			(transactions_id, products_id, quantity, subtotal, variant_products_id, size_products_id)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`, transactionID, item.ProductID, item.Quantity, subtotal, item.VariantProductID, item.SizeProductID)
+	if err != nil {
+		return fmt.Errorf("failed to insert transaction item: %v", err)
+	}
+
+	var remainingStock int
+	err = tx.QueryRow(ctx, `
+		SELECT stock FROM products WHERE id = $1
+	`, item.ProductID).Scan(&remainingStock)
+	if err != nil {
+		return fmt.Errorf("failed to verify remaining stock: %v", err)
+	}
+	if remainingStock < 0 {
+		return fmt.Errorf("stock below zero after transaction for product ID %d", item.ProductID)
+	}
+
+	return nil
 }
 
 func ClearCart(pool *pgxpool.Pool,tx pgx.Tx, userID int) error {
 	_, err := tx.Exec(context.Background(), `DELETE FROM carts WHERE users_id=$1`, userID)
 
 	return err
+}
+
+func GetProfileByUser(pool *pgxpool.Pool, userID int) (models.ProfileData, error) {
+	var data models.ProfileData
+
+	err := pool.QueryRow(context.Background(), `
+		SELECT 
+			u.fullname,
+			u.email,
+			COALESCE(p.address, '') AS address,
+			COALESCE(p.phone, '') AS phone
+		FROM users u
+		LEFT JOIN profile p ON u.profile_id = p.id
+		WHERE u.id = $1
+	`, userID).Scan(&data.Fullname, &data.Email, &data.Address, &data.Phone)
+
+	return data, err
 }
