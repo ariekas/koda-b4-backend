@@ -19,7 +19,7 @@ func MainRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 		routesAdmin.UsersRoutes(admin, pool)
 		routesAdmin.CategoryProductRoutes(admin, pool)
 		routesAdmin.ProductRoutes(admin, pool)
-		routesAdmin.OrderRoutes(admin, pool)
+		routesAdmin.TransactionRoutes(admin, pool)
 	}
 
 	auth := r.Group("/auth")
