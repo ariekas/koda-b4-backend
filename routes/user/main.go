@@ -23,4 +23,5 @@ func UserRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
 	r.GET("/users/:id", usersController.GetUserById)
 	r.PATCH("users/profile/:id", usersController.UpdateProfile)
 	r.GET("/historys", historyController.GetHistorys)
+	r.GET("/history/:id", historyController.DetailHistory)
 }
