@@ -1,41 +1,39 @@
-package api
+package handler
 
 import (
 	"back-end-coffeShop/controller"
-	"back-end-coffeShop/lib/middelware"
+	"back-end-coffeShop/models"
 	"back-end-coffeShop/routes"
-	"fmt"
 	"net/http"
 
-	_ "back-end-coffeShop/docs"
-
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var App *gin.Engine
 
-func init() {
-	defer func() {
-		r := recover()
-		if r != nil {
-			fmt.Println(r)
-		}
-	}()
+func InitHandler(pool *pgxpool.Pool) {
+	App = gin.New()
+	App.Use(gin.Recovery())
 
-	connectDb := controller.ConnectDB()
-	App = gin.Default()
+	App.Use(gin.Logger())
 
-	App.MaxMultipartMemory = 8 << 20
-	App.Use(middelware.CrossMiddelware)
-	App.Use(middelware.AllowPreflight)
-	
-	routes.MainRoutes(App, connectDb)
+	App.GET("/", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, models.Response{
+			Success: true,
+			Message: "Backend is running well 🚀",
+		})
+	})
 
-	App.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	routes.MainRoutes(App, pool)
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
+	pool := controller.ConnectDB()
+
+	if App == nil {
+		InitHandler(pool)
+	}
+
 	App.ServeHTTP(w, r)
 }
