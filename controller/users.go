@@ -120,7 +120,7 @@ func (uc UserController) UpdateRole(ctx *gin.Context){
 
 }
 
-func (uc UserController) GetUserWithProfile(ctx *gin.Context) {
+func (uc UserController) GetUserById(ctx *gin.Context) {
 	id := ctx.Param("id")
 	userId, err := strconv.Atoi(id)
 	if err != nil {
@@ -131,7 +131,7 @@ func (uc UserController) GetUserWithProfile(ctx *gin.Context) {
 		return
 	}
 
-	user, err := respository.GetUserWithProfile(uc.Pool, userId)
+	user, err := respository.GetUserById(uc.Pool, userId)
 	if err != nil {
 		ctx.JSON(404, models.Response{
 			Success: false,

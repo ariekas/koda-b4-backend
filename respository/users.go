@@ -125,7 +125,7 @@ func UpdateProfile(pool *pgxpool.Pool, userId int, input models.UpdateProfileReq
 	return nil
 }
 
-func GetUserWithProfile(pool *pgxpool.Pool, userId int) (models.User, error) {
+func GetUserById(pool *pgxpool.Pool, userId int) (models.User, error) {
 	var user models.User
 	err := pool.QueryRow(context.Background(), `
 		SELECT 
