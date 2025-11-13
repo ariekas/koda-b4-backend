@@ -8,9 +8,9 @@
       }
     ],
     "rewrites": [
-      {
-        "source": "/(.*)",
-        "destination": "/api/main.go"
-      }
+        {
+            "source": "/((?!api).*)",
+            "destination": "/api/main.go"
+          }
     ]
   }
