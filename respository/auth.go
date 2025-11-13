@@ -13,15 +13,32 @@ import (
 
 func Register(ctx *gin.Context, pool *pgxpool.Pool) (models.User, error) {
 	var input models.RegisterRequest
+	var checkEmail bool
+
 	err := ctx.BindJSON(&input)
 	if err != nil {
 		fmt.Println("Error: Invalid type much json")
+	}
+
+	if len(input.Password) <= 6 {
+		return models.User{}, fmt.Errorf("password must be at least 6 characters")
+
 	}
 
 	argon := argon2.DefaultConfig()
 	hash, err := argon.HashEncoded([]byte(input.Password))
 	if err != nil {
 		fmt.Println("Error : Failed to hash password")
+	}
+
+	err = pool.QueryRow(context.Background(), `SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)`, input.Email).Scan(&checkEmail)
+
+	if err != nil {
+		fmt.Println("Error checking email:", err)
+	}
+	
+	if checkEmail {
+		return models.User{}, fmt.Errorf("email already registered")
 	}
 
 	now := time.Now()

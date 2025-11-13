@@ -30,10 +30,11 @@ func (ac AuthController) Register(ctx *gin.Context) {
 	user, err := respository.Register(ctx, ac.Pool)
 
 	if err != nil {
-		ctx.JSON(201, models.Response{
-			Success: true,
-			Message: "Error: Failed to register",
+		ctx.JSON(401, models.Response{
+			Success: false,
+			Message: err.Error(),
 		})
+		return
 	}
 	
 	ctx.JSON(201, models.Response{
