@@ -1,3 +1,0 @@
-ALTER TABLE taxs
-  ADD CONSTRAINT fk_tax_order
-  FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE;

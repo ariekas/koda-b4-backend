@@ -1,1 +1,0 @@
-ALTER TABLE size_product DROP CONSTRAINT fk_size_product;

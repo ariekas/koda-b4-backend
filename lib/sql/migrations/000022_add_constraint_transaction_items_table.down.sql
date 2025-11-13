@@ -1,0 +1,5 @@
+ALTER TABLE transaction_items
+DROP CONSTRAINT fk_transaction_items_transactions,
+DROP CONSTRAINT fk_transaction_items_products,
+DROP CONSTRAINT fk_transaction_items_variant,
+DROP CONSTRAINT fk_transaction_items_size;

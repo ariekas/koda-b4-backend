@@ -1,7 +1,6 @@
-CREATE TABLE deliverys (
+CREATE TABLE status_transactions(
     id SERIAL PRIMARY KEY,
-    name VARCHAR NOT NULL,
-    price DECIMAL(10,2) DEFAULT 0,
+    status VARCHAR,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );

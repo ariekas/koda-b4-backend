@@ -1,1 +1,0 @@
-DROP TABLE size_product;

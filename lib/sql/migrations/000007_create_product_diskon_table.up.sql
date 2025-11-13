@@ -1,7 +1,0 @@
-CREATE TABLE product_diskon (
-  id SERIAL PRIMARY KEY,
-  product_id INT,
-  diskon_id INT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);

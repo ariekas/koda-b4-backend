@@ -1,1 +1,0 @@
-ALTER TABLE taxs DROP CONSTRAINT fk_tax_order;

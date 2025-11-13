@@ -1,7 +1,0 @@
-CREATE TABLE image_products (
-  id SERIAL PRIMARY KEY,
-  image TEXT,
-  product_id INT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);

@@ -1,1 +1,0 @@
-ALTER TABLE variant DROP CONSTRAINT fk_variant_product;

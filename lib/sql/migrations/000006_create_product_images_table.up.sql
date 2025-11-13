@@ -1,7 +1,7 @@
-CREATE TABLE deliverys (
+CREATE TABLE product_images (
     id SERIAL PRIMARY KEY,
-    name VARCHAR NOT NULL,
-    price DECIMAL(10,2) DEFAULT 0,
+    image TEXT NOT NULL,
+    products_id INT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
