@@ -19,9 +19,6 @@ var (
 
 func init() {
 	App = gin.New()
-	App.RedirectTrailingSlash = false
-	App.RedirectFixedPath = false
-	App.Use(gin.Recovery(), gin.Logger())
 	pool = controller.ConnectDB()
 
 	App = gin.New()
