@@ -70,6 +70,7 @@ func (uc UserController) DeleteUser(ctx *gin.Context){
 			Success: false,
 			Message: "Error: Failed to delete user",
 		})
+		return
 	}
 
 	ctx.JSON(201, models.Response{
