@@ -12,6 +12,7 @@ func UserRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
 	cartController := controller.CartController{Pool: pool}
 	transactionsControlelr :=  controller.TransactionsController{Pool: pool}
 	usersController := controller.UserController{Pool: pool}
+	historyController := controller.HistoryController{Pool: pool}
 
 	r.GET("/products/favorite", productController.GetFavoriteProducts)
 	r.GET("/products/filter", productController.Filter)
@@ -21,5 +22,5 @@ func UserRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
 	r.POST("/transactions",transactionsControlelr.CreateTransaction)
 	r.GET("/users/:id", usersController.GetUserById)
 	r.PATCH("users/profile/:id", usersController.UpdateProfile)
-	
+	r.GET("/historys", historyController.GetHistorys)
 }
