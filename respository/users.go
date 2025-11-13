@@ -93,3 +93,61 @@ func UpdateRole(pool *pgxpool.Pool, userId int, newRole string) error {
 	_, err := pool.Exec(context.Background(), "UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2", newRole, userId)
 	return err
 }
+
+func UpdateProfile(pool *pgxpool.Pool, userId int, input models.UpdateProfileRequest) error {
+	tx, err := pool.Begin(context.Background())
+	if err != nil {
+		fmt.Println("failed to start transaction", err)
+	}
+	defer tx.Rollback(context.Background())
+
+	var profileId int
+	err = tx.QueryRow(context.Background(), `
+		SELECT profile_id FROM users WHERE id = $1
+	`, userId).Scan(&profileId)
+	if err != nil {
+		fmt.Println("user not found or profile not assigned", err)
+	}
+
+	_, err = tx.Exec(context.Background(), `
+		UPDATE profile
+		SET pic = $1, phone = $2, address = $3, updated_at = NOW()
+		WHERE id = $4
+	`, input.Pic, input.Phone, input.Address, profileId)
+	if err != nil {
+		fmt.Println("failed to update profile", err)
+	}
+
+	if err = tx.Commit(context.Background()); err != nil {
+		fmt.Println("failed to commit transaction", err)
+	}
+
+	return nil
+}
+
+func GetUserWithProfile(pool *pgxpool.Pool, userId int) (models.User, error) {
+	var user models.User
+	err := pool.QueryRow(context.Background(), `
+		SELECT 
+			u.id, u.fullname, u.email, u.role, u.profile_id,
+			p.pic, p.phone, p.address, u.created_at, u.updated_at
+		FROM users u
+		LEFT JOIN profile p ON u.profile_id = p.id
+		WHERE u.id = $1
+	`, userId).Scan(
+		&user.Id,
+		&user.Fullname,
+		&user.Email,
+		&user.Role,
+		&user.ProfileID,
+		&user.Pic,
+		&user.Phone,
+		&user.Address,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		fmt.Println("failed to get user profile", err)
+	}
+	return user, nil
+}

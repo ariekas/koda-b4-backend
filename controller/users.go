@@ -119,3 +119,65 @@ func (uc UserController) UpdateRole(ctx *gin.Context){
 	})
 
 }
+
+func (uc UserController) GetUserWithProfile(ctx *gin.Context) {
+	id := ctx.Param("id")
+	userId, err := strconv.Atoi(id)
+	if err != nil {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "Invalid user ID",
+		})
+		return
+	}
+
+	user, err := respository.GetUserWithProfile(uc.Pool, userId)
+	if err != nil {
+		ctx.JSON(404, models.Response{
+			Success: false,
+			Message: "User not found",
+		})
+		return
+	}
+
+	ctx.JSON(200, models.Response{
+		Success: true,
+		Message: "Success getting user profile",
+		Data:    user,
+	})
+}
+
+func (uc UserController) UpdateProfile(ctx *gin.Context) {
+	id := ctx.Param("id")
+	userId, err := strconv.Atoi(id)
+	if err != nil {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "Invalid user ID",
+		})
+		return
+	}
+
+	var input models.UpdateProfileRequest
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "Invalid input format",
+		})
+		return
+	}
+
+	err = respository.UpdateProfile(uc.Pool, userId, input)
+	if err != nil {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: fmt.Sprintf("Failed to update profile: %v", err),
+		})
+		return
+	}
+
+	ctx.JSON(201, models.Response{
+		Success: true,
+		Message: "Profile updated successfully",
+	})
+}

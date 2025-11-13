@@ -45,3 +45,9 @@ var OtpForget = make(map[string]struct {
 	Code      string
 	ExpiresAt time.Time
 })
+
+type UpdateProfileRequest struct {
+	Pic     *string `json:"pic" example:"https://example.com/profile.jpg"`
+	Phone   *string `json:"phone" example:"+628123456789"`
+	Address *string `json:"address" example:"Jl. Sudirman No. 123"`
+}
