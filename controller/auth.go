@@ -205,7 +205,7 @@ func (ac AuthController) CreateNewPassword(ctx *gin.Context){
 	if err != nil {
 		ctx.JSON(500, models.Response{
 			Success: false,
-			Message: "Failed to update password",
+			Message: err.Error(),
 		})
 		return
 	}

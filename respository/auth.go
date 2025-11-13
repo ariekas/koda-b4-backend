@@ -22,7 +22,6 @@ func Register(ctx *gin.Context, pool *pgxpool.Pool) (models.User, error) {
 
 	if len(input.Password) <= 6 {
 		return models.User{}, fmt.Errorf("password must be at least 6 characters")
-
 	}
 
 	argon := argon2.DefaultConfig()
@@ -105,6 +104,11 @@ func VerifPassword(inputPassword string, hashPassword string) bool {
 }
 
 func UpdatePassword(pool *pgxpool.Pool, email string, newPassword string) error {
+
+	if len(newPassword) <= 6 {
+		return fmt.Errorf("password must be at least 6 characters")
+	}
+
 	argon := argon2.DefaultConfig()
 	hash, err := argon.HashEncoded([]byte(newPassword))
 	if err != nil {
