@@ -4,19 +4,24 @@ import (
 	"back-end-coffeShop/controller"
 	"back-end-coffeShop/models"
 	"back-end-coffeShop/routes"
+	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var App *gin.Engine
+var (
+	App  *gin.Engine
+	pool *pgxpool.Pool
+)
 
-func InitHandler(pool *pgxpool.Pool) {
+func init() {
+	pool = controller.ConnectDB()
+
 	App = gin.New()
-	App.Use(gin.Recovery())
-
-	App.Use(gin.Logger())
+	App.Use(gin.Recovery(), gin.Logger())
 
 	App.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, models.Response{
@@ -29,10 +34,10 @@ func InitHandler(pool *pgxpool.Pool) {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	pool := controller.ConnectDB()
+	if err := pool.Ping(context.Background()); err != nil {
+		fmt.Println("Reconnecting to database...")
+		controller.ConnectDB()
 
-	if App == nil {
-		InitHandler(pool)
 	}
 
 	App.ServeHTTP(w, r)
