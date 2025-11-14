@@ -15,15 +15,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type PaginationResponse struct {
-	Data       []models.Product  `json:"data"`
-	Page       int               `json:"page"`
-	Limit      int               `json:"limit"`
-	Total      int               `json:"total"`
-	TotalPages int               `json:"total_pages"`
-	Links      map[string]string `json:"links"`
-}
-
 func GetProducts(pool *pgxpool.Pool, page int) (PaginationResponse, error) {
 	var products []models.Product
 	limit := 50
@@ -123,6 +114,8 @@ func CreateProduct(pool *pgxpool.Pool, input models.ProductInput) (models.Produc
 		fmt.Println("Error fetching product ID:", err)
 		return models.Product{}, err
 	}
+
+	
 
 	product := models.Product{
 		Id:                productId,

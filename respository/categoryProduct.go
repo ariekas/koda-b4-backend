@@ -4,14 +4,23 @@ import (
 	"back-end-coffeShop/models"
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetCategories(pool *pgxpool.Pool) ([]models.CategoryProduct, error) {
+func GetCategories(pool *pgxpool.Pool, page int) ([]models.CategoryProduct, error) {
 	var categories []models.CategoryProduct
+	limit := 50
+	offset := (page - 1) * limit
 
-	rows, err := pool.Query(context.Background(), "SELECT id, name FROM category_products")
+	var total int
+	err := pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM category_products").Scan(&total)
+	if err != nil {
+		return nil, fmt.Errorf("Error counting products: %w", err)
+	}
+
+	rows, err := pool.Query(context.Background(), "SELECT id, name FROM category_products OFFSET $1 LIMIT $2", offset, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get categories, %w", err)
 	}
@@ -23,6 +32,19 @@ func GetCategories(pool *pgxpool.Pool) ([]models.CategoryProduct, error) {
 			return nil, fmt.Errorf("error scanning category: %w", err)
 		}
 		categories = append(categories, category)
+	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+	links := map[string]string{}
+	if page > 1 {
+		links["prev"] = fmt.Sprintf("/categorys?page=%d", page-1)
+	} else {
+		links["prev"] = "null"
+	}
+	if page < totalPages {
+		links["next"] = fmt.Sprintf("/categorys?page=%d", page+1)
+	} else {
+		links["next"] = "null"
 	}
 
 	return categories, nil
