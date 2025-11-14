@@ -20,8 +20,9 @@ func (cpc CategoryProductController) GetAll(ctx *gin.Context){
 	if err != nil {
 		ctx.JSON(401, models.Response{
 			Success: false,
-			Message: "Error: Failed to getting categorys",
+			Message: err.Error(),
 		})
+		return
 	}
 
 	ctx.JSON(201, models.Response{
@@ -37,17 +38,25 @@ func (cpc CategoryProductController) Create(ctx *gin.Context){
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		ctx.JSON(http.StatusBadRequest, models.Response{
 			Success: false,
-			Message: "Invalid input",
+			Message: err.Error(),
 		})
 		return
 	}
 
 	categorys, err := respository.CreateCategory(cpc.Pool, input)
 	
+	if input.Name == categorys.Name {
+		ctx.JSON(401, models.Response{
+			Success: false,
+			Message: "error: category already exists",
+		})
+		return
+	}
+
 	if err != nil{
 		ctx.JSON(401, models.Response{
 			Success: false,
-			Message: "Failed to create category",
+			Message: err.Error(),
 		})
 		return
 	}
@@ -66,7 +75,7 @@ func (cpc CategoryProductController) GetByID(ctx *gin.Context){
 	if err != nil {
 		ctx.JSON(401, models.Response{
 			Success: false,
-			Message: "Error get category",
+			Message: err.Error(),
 		})
 		return
 	}
@@ -84,7 +93,7 @@ func (cpc CategoryProductController) Edit(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(400, models.Response{
 			Success: false,
-			Message: "Invalid category ID",
+			Message: err.Error(),
 		})
 		return
 	}
@@ -93,7 +102,7 @@ func (cpc CategoryProductController) Edit(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		ctx.JSON(400, models.Response{
 			Success: false,
-			Message: "Invalid input data",
+			Message: err.Error(),
 		})
 		return
 	}
@@ -102,7 +111,7 @@ func (cpc CategoryProductController) Edit(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(404, models.Response{
 			Success: false,
-			Message: "Error editing category",
+			Message:err.Error(),
 		})
 		return
 	}
@@ -121,8 +130,9 @@ func (cpc CategoryProductController) Delete(ctx *gin.Context){
 	if err != nil {
 		ctx.JSON(401, models.Response{
 			Success: false,
-			Message: "Error delete category",
+			Message: err.Error(),
 		})
+		return
 	}
 
 	ctx.JSON(201, models.Response{
