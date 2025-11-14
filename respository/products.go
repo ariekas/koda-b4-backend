@@ -86,19 +86,42 @@ func GetProducts(pool *pgxpool.Pool, page int) (PaginationResponse, error) {
 
 func CreateProduct(pool *pgxpool.Pool, input models.ProductInput) (models.Product, error) {
 	now := time.Now()
+
+	var discountsID interface{} = nil
+	priceDiscount := 0.0
+
 	_, err := pool.Exec(context.Background(), `
 		INSERT INTO products 
-		(name, price, description, stock, is_flashsale, is_favorite_product, category_products_id, created_at, updated_at)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-	`, input.Name, input.Price, input.Description, input.Stock, input.IsFlashSale, false, input.CategoryProductId, now, now)
+		(discounts_id, name, price, price_discounts, description, stock, is_flashsale, 
+		 is_favorite_product, category_products_id, created_at, updated_at)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+	`,
+		discountsID,             
+		input.Name,                
+		input.Price,                
+		priceDiscount,              
+		input.Description,         
+		input.Stock,              
+		input.IsFlashSale,         
+		false,                      
+		input.CategoryProductId,   
+		now, now,
+	)
+
 	if err != nil {
-		fmt.Println("failed to insert product", err)
+		fmt.Println("failed to insert product:", err)
+		return models.Product{}, err
 	}
 
 	var productId int
-	err = pool.QueryRow(context.Background(), "SELECT id FROM products WHERE name=$1 ORDER BY id DESC LIMIT 1", input.Name).Scan(&productId)
+	err = pool.QueryRow(context.Background(),
+		"SELECT id FROM products WHERE name=$1 ORDER BY id DESC LIMIT 1",
+		input.Name,
+	).Scan(&productId)
+
 	if err != nil {
-		fmt.Println("Error inserting product:", err)
+		fmt.Println("Error fetching product ID:", err)
+		return models.Product{}, err
 	}
 
 	product := models.Product{
@@ -113,6 +136,7 @@ func CreateProduct(pool *pgxpool.Pool, input models.ProductInput) (models.Produc
 		CreatedAt:         now,
 		UpdatedAt:         now,
 	}
+
 	return product, nil
 }
 
