@@ -42,10 +42,10 @@ func (pc ProductController) GetProducts(ctx *gin.Context) {
 		}
 	}
 
-	var response respository.PaginationResponse
+	var response models.PaginationResponse
 
 	if cache == "" {
-		response, err = respository.GetProducts(pc.Pool, page)
+		response, err := respository.GetProducts(pc.Pool, page)
 		if err != nil {
 			ctx.JSON(500, models.Response{
 				Success: false,
@@ -83,7 +83,7 @@ func (pc ProductController) GetProducts(ctx *gin.Context) {
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products [post]
 func (pc ProductController) CreateProduct(ctx *gin.Context) {
-	var input models.ProductInput
+	var input models.Product
 
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		ctx.JSON(http.StatusBadRequest, models.Response{
@@ -93,7 +93,7 @@ func (pc ProductController) CreateProduct(ctx *gin.Context) {
 		return
 	}
 
-	product, err := respository.CreateProduct(pc.Pool, input)
+	err := respository.CreateProduct(pc.Pool, input)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, models.Response{
 			Success: false,
@@ -114,7 +114,7 @@ func (pc ProductController) CreateProduct(ctx *gin.Context) {
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Success Create product",
-		Data:    product,
+		Data:    input,
 	})
 }
 
@@ -134,7 +134,7 @@ func (pc ProductController) EditProduct(ctx *gin.Context) {
 	id := ctx.Param("id")
 	productId, _ := strconv.Atoi(id)
 	
-	var input models.ProductInput
+	var input models.Product
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		ctx.JSON(http.StatusBadRequest, models.Response{
 			Success: false,
@@ -162,6 +162,15 @@ func (pc ProductController) EditProduct(ctx *gin.Context) {
 			Data:    nil,
 		})
 		return
+	}
+
+	redis := config.Redis()
+	iter := redis.Scan(context.Background(), 0 ,"/products*", 0).Iterator()
+	for iter.Next(context.Background()) {
+		redis.Del(context.Background(), iter.Val())
+	}
+	if err := iter.Err(); err != nil {
+		fmt.Println("Redis scan error:", err)
 	}
 
 	ctx.JSON(201, models.Response{
@@ -194,6 +203,15 @@ func (pc ProductController) DeleteProduct(ctx *gin.Context) {
 		return
 	}
 
+	redis := config.Redis()
+	iter := redis.Scan(context.Background(), 0 ,"/products*", 0).Iterator()
+	for iter.Next(context.Background()) {
+		redis.Del(context.Background(), iter.Val())
+	}
+	if err := iter.Err(); err != nil {
+		fmt.Println("Redis scan error:", err)
+	}
+
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Sucess deleted product",
@@ -213,39 +231,30 @@ func (pc ProductController) DeleteProduct(ctx *gin.Context) {
 // @Failure 401 {object} models.Response "Unauthorized"
 // @Router /products/image/{id} [post]
 func (pc ProductController) CreateImageProduct(ctx *gin.Context) {
-	id := ctx.Param("id")
-	productId, _ := strconv.Atoi(id)
+	productId, _ := strconv.Atoi(ctx.Param("id"))
 
-	from, err := ctx.MultipartForm()
+	form, err := ctx.MultipartForm()
 	if err != nil {
-		ctx.JSON(400, models.Response{
-			Success: false,
-			Message: "Failed to read form data",
-		})
+		ctx.JSON(400, models.Response{Success: false, Message: "Cannot read form data"})
 		return
 	}
 
-	files := from.File["images"]
+	files := form.File["images"]
 	if len(files) == 0 {
-		ctx.JSON(400, models.Response{
-			Success: false,
-			Message: "No image uploaded",
-		})
+		ctx.JSON(400, models.Response{Success: false, Message: "No image uploaded"})
 		return
 	}
 
-	imageProduct, err := respository.CreateImageProduct(pc.Pool, productId, files)
+	images, err := respository.CreateImageProduct(pc.Pool, productId, files)
 	if err != nil {
-		ctx.JSON(401, models.Response{
-			Success: false,
-			Message: "Error: Failed to create product image",
-		})
+		ctx.JSON(400, models.Response{Success: false, Message: err.Error()})
+		return
 	}
 
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Success create image product",
-		Data:    imageProduct,
+		Data:    images,
 	})
 }
 
@@ -300,7 +309,7 @@ func (pc ProductController) GetFavoriteProducts(ctx *gin.Context) {
 		return
 	}
 
-	response := respository.PaginationResponse{
+	response := models.PaginationResponse{
 		Data:       data,
 		Page:       1, 
 		Limit:      limit,
@@ -357,7 +366,7 @@ func (pc ProductController) Filter(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, models.Response{
 		Success: true,
 		Message: "Success filtering products",
-		Data: respository.PaginationResponse{
+		Data: models.PaginationResponse{
 			Data:       data,
 			Page:       page,
 			Limit:      limit,
@@ -376,8 +385,9 @@ func (pc ProductController) DetailProduct(ctx *gin.Context){
 	if err != nil {
 		ctx.JSON(401, models.Response{
 			Success: false,
-			Message: "Failed to getting detail product",
+			Message: err.Error(),
 		})
+		return
 	}
 
 	ctx.JSON(200, models.Response{

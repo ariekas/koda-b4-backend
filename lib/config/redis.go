@@ -8,14 +8,12 @@ import (
 )
 
 func Redis() *redis.Client {
-	godotenv.Load()
-	redisUrl := os.Getenv("REDIS_URL")
-	password := os.Getenv("REDIS_PASSWORD")
-	rdb := redis.NewClient(&redis.Options{
-		Addr: redisUrl,
-		Password: password,
-		DB: 0,
-	})
+    _ = godotenv.Load()
 
-	return rdb
+    opt, err := redis.ParseURL(os.Getenv("REDIS_URL"))
+    if err != nil {
+        panic(err)
+    }
+
+    return redis.NewClient(opt)
 }
