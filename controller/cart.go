@@ -16,29 +16,29 @@ type CartController struct {
 
 func (cc CartController) AddCart(ctx *gin.Context) {
 	userID := middelware.GetUserFromToken(ctx)
-	var req models.AddToCartInput
+	if userID == 0 {
+		ctx.JSON(http.StatusUnauthorized, models.Response{
+			Success: false,
+			Message: "Unauthorized: Invalid or missing token",
+		})
+		return
+	}
 
+	var req models.AddToCartInput
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, models.Response{
 			Success: false,
 			Message: "Invalid request format",
+			Data:    err.Error(),
 		})
 		return
 	}
 
-	if err := respository.AddToCart(cc.Pool, userID, req.ProductID, req.SizeID, req.SizeID, req.Quantity); err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.Response{
-			Success: false,
-			Message: "Failed to add product to cart",
-		})
-		return
-	}
-
-	cartItems, err := respository.GetUserCartProduct(cc.Pool, userID)
+	err := respository.AddToCart(cc.Pool, userID, req.ProductID, req.SizeID, req.VariantID, req.Quantity)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.Response{
 			Success: false,
-			Message: "Failed to fetch updated cart",
+			Message: err.Error(), 
 		})
 		return
 	}
@@ -46,7 +46,6 @@ func (cc CartController) AddCart(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, models.Response{
 		Success: true,
 		Message: "Product added to cart successfully",
-		Data:    cartItems,
 	})
 }
 

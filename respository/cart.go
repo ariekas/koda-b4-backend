@@ -11,25 +11,26 @@ import (
 func AddToCart(pool *pgxpool.Pool, userId int, productId int, sizeId int, variantId int, quantity int) error {
 	ctx := context.Background()
 
-	var basePrice, sizeCost, variantCost float64
-
-	err := pool.QueryRow(ctx, `
-		SELECT price FROM products WHERE id=$1
-	`, productId).Scan(&basePrice)
+	var basePrice float64
+	err := pool.QueryRow(ctx, `SELECT price FROM products WHERE id=$1`, productId).Scan(&basePrice)
 	if err != nil {
-		 fmt.Println("product not found", err)
+		return fmt.Errorf("product not found: %v", err)
 	}
 
+	var sizeCost float64
 	if sizeId != 0 {
-		_ = pool.QueryRow(ctx, `
-			SELECT additional_costs FROM size_products WHERE id=$1
-		`, sizeId).Scan(&sizeCost)
+		if err := pool.QueryRow(ctx, `SELECT additional_costs FROM size_products WHERE id=$1`, sizeId).
+			Scan(&sizeCost); err != nil {
+			return fmt.Errorf("size not found: %v", err)
+		}
 	}
 
+	var variantCost float64
 	if variantId != 0 {
-		_ = pool.QueryRow(ctx, `
-			SELECT additional_costs FROM variant_products WHERE id=$1
-		`, variantId).Scan(&variantCost)
+		if err := pool.QueryRow(ctx, `SELECT additional_costs FROM variant_products WHERE id=$1`, variantId).
+			Scan(&variantCost); err != nil {
+			return fmt.Errorf("variant not found: %v", err)
+		}
 	}
 
 	var existingCartID int
@@ -44,21 +45,25 @@ func AddToCart(pool *pgxpool.Pool, userId int, productId int, sizeId int, varian
 			SET quantity = quantity + $1, updated_at = NOW()
 			WHERE id = $2
 		`, quantity, existingCartID)
+
 		if err != nil {
-			 fmt.Println("failed to update cart", err)
+			return fmt.Errorf("failed to update cart: %v", err)
 		}
-	} else {
-		_, err := pool.Exec(ctx, `
-			INSERT INTO carts (users_id, products_id, size_products_id, variant_products_id, quantity)
-			VALUES ($1, $2, $3, $4, $5)
-		`, userId, productId, sizeId, variantId, quantity)
-		if err != nil {
-			 fmt.Println("failed to add to cart", err)
-		}
+		return nil
+	}
+
+	_, err = pool.Exec(ctx, `
+		INSERT INTO carts (users_id, products_id, size_products_id, variant_products_id, quantity)
+		VALUES ($1, $2, $3, $4, $5)
+	`, userId, productId, sizeId, variantId, quantity)
+
+	if err != nil {
+		return fmt.Errorf("failed to insert to cart: %v", err)
 	}
 
 	return nil
 }
+
 
 func GetUserCartProduct(pool *pgxpool.Pool, userId int) ([]models.CartItem, error) {
 	ctx := context.Background()
