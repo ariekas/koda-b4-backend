@@ -224,7 +224,7 @@ func CreateTransaction(pool *pgxpool.Pool, userID int, input models.TransactionI
 
 	profileData, err := GetProfileByUser(pool, userID)
 	if err != nil {
-		fmt.Printf("gagal mengambil data profil: %v", err)
+		return 0, fmt.Errorf("gagal mengambil data profil: %v", err)
 	}
 
 	nameUser := input.NameUser
@@ -248,19 +248,39 @@ func CreateTransaction(pool *pgxpool.Pool, userID int, input models.TransactionI
 	}
 
 	if nameUser == "" || addressUser == "" || emailUser == "" {
-		fmt.Printf("data user tidak lengkap: pastikan nama, alamat, dan email tersedia")
+		return 0, fmt.Errorf("data user tidak lengkap")
 	}
 
 	err = tx.QueryRow(ctx, `
-		INSERT INTO transactions (users_id, deliverys_id, payment_methods_id, 
-			name_user, address_user, phone_user, email_user, total, payment_status, invoice_num)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9)
+		INSERT INTO transactions (
+			users_id, 
+			deliverys_id, 
+			payment_methods_id,
+			status_transactions_id,
+			name_user, 
+			address_user, 	
+			phone_user, 
+			email_user, 
+			total, 
+			invoice_num
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING id
-	`, userID, input.DeliveryID, input.PaymentMethodID,
-		nameUser, addressUser, phoneUser, emailUser, total, invoice).Scan(&id)
+	`,
+		userID,
+		input.DeliveryID,
+		input.PaymentMethodID,
+		input.StatusTransactionID,
+		nameUser,
+		addressUser,
+		phoneUser,
+		emailUser,
+		total,
+		invoice,
+	).Scan(&id)
 
 	if err != nil {
-	fmt.Printf("gagal membuat transaksi: %v", err)
+		return 0, fmt.Errorf("gagal membuat transaksi: %v", err)
 	}
 
 	return id, nil

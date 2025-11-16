@@ -40,12 +40,13 @@ type PaginationResponseTransaction struct {
 }
 
 type TransactionInput struct {
-	DeliveryID      int     `json:"delivery_id" binding:"required"`
-	PaymentMethodID int     `json:"payment_method_id" binding:"required"`
-	NameUser        string  `json:"name_user"`
-	AddressUser     string  `json:"address_user"`
-	PhoneUser       string  `json:"phone_user"`
-	EmailUser       string  `json:"email_user"`
+	DeliveryID          int    `json:"delivery_id" binding:"required"`
+	PaymentMethodID     int    `json:"payment_method_id" binding:"required"`
+	StatusTransactionID int    `json:"status_transactions_id" binding:"required"`
+	NameUser            string `json:"name_user"`
+	AddressUser         string `json:"address_user"`
+	PhoneUser           string `json:"phone_user"`
+	EmailUser           string `json:"email_user"`
 }
 
 type CartItems struct {
