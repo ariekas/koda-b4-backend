@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/matthewhartstonge/argon2"
 )
 
 type AuthController struct {
@@ -66,6 +67,20 @@ func (ac AuthController) Login(ctx *gin.Context) {
 
 	if err != nil {
 		fmt.Println("Error : Failed type much json")
+	}
+
+	if loginData.Email == "" {
+		ctx.JSON(401, models.Response{
+			Success: false,
+			Message: "requared email",
+		})
+	}
+
+	if loginData.Password == "" {
+		ctx.JSON(401, models.Response{
+			Success: false,
+			Message: "requared password",
+		})
 	}
 
 	users, err := respository.FindUserEmail(ac.Pool, loginData.Email)
@@ -211,8 +226,6 @@ func (ac AuthController) CreateNewPassword(ctx *gin.Context){
 		NewPassword string `json:"new_password"`
 	}
 
-	var users models.User
-
 	err := ctx.BindJSON(&Input)
 	if err != nil {
 		fmt.Println("Error Failed type request", err)
@@ -251,11 +264,22 @@ func (ac AuthController) CreateNewPassword(ctx *gin.Context){
 		return
 	}
 
-	if Input.NewPassword == users.Password {
-		ctx.JSON(401, models.Response{
+	user, err := respository.FindUserEmail(ac.Pool, Input.Email)
+	if err != nil {
+		ctx.JSON(404, models.Response{
 			Success: false,
-			Message: "The password entered must not be the same.",
+			Message: "email not found",
 		})
+		return
+	}
+
+	ok, _ := argon2.VerifyEncoded([]byte(user.Password), []byte(Input.NewPassword))
+	if ok {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "new password cannot be the same as old password",
+		})
+		return
 	}
 
 	ctx.JSON(200, models.Response{
