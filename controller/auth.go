@@ -69,11 +69,10 @@ func (ac AuthController) Login(ctx *gin.Context) {
 	}
 
 	users, err := respository.FindUserEmail(ac.Pool, loginData.Email)
-
 	if err != nil {
 		ctx.JSON(404, models.Response{
 			Success: false,
-			Message: "Not found users",
+			Message: err.Error(),
 		})
 		return
 	}

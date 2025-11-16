@@ -90,14 +90,18 @@ func FindUserEmail(pool *pgxpool.Pool, email string) (models.User, error) {
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
-	return user, err
+
+	if err != nil {
+		return models.User{}, fmt.Errorf("no user found with this email address, %w", err)
+	}
+	return user, nil
 }
 
 func VerifPassword(inputPassword string, hashPassword string) bool {
 	ok, err := argon2.VerifyEncoded([]byte(hashPassword), []byte(inputPassword))
 
 	if err != nil {
-		fmt.Println("Error : Password not metmatch")
+		fmt.Println("Error : Password not metmatch, ",err)
 	}
 
 	return ok
@@ -119,7 +123,7 @@ func UpdatePassword(pool *pgxpool.Pool, email string, newPassword string) error 
 	_, err = pool.Exec(context.Background(), "UPDATE users SET password = $1, updated_at=$2 WHERE email=$3", hash, time.Now(), email)
 
 	if err != nil {
-		fmt.Println("Error updating password:", err)
+		return fmt.Errorf("failed updating password, %w", err)
 	}
 
 	return nil
