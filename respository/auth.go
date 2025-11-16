@@ -20,8 +20,24 @@ func Register(ctx *gin.Context, pool *pgxpool.Pool) (models.User, error) {
 		fmt.Println("Error: Invalid type much json")
 	}
 
+	if input.Fullname == "" {
+		return models.User{}, fmt.Errorf("fullname is required")
+	}
+	
+	if input.Email == "" {
+		return models.User{}, fmt.Errorf("email is required")
+	}
+	
+	if input.Role == "" {
+		return models.User{}, fmt.Errorf("role is required")
+	}
+	
+	if input.Password == "" {
+		return models.User{}, fmt.Errorf("password is required")
+	}
+	
 	if len(input.Password) <= 6 {
-		return models.User{}, fmt.Errorf("password must be at least 6 characters")
+		return models.User{}, fmt.Errorf("password must be at more 6 characters")
 	}
 
 	argon := argon2.DefaultConfig()

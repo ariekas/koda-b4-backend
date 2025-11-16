@@ -104,7 +104,7 @@ func (ac AuthController) Login(ctx *gin.Context) {
 
 func (ac AuthController) ForgetPassword(ctx *gin.Context){
 	var Input struct{
-		Email string `json:"email"`
+		Email string `json:"email"`  
 	}
 
 	err := ctx.BindJSON(&Input)
@@ -117,11 +117,19 @@ func (ac AuthController) ForgetPassword(ctx *gin.Context){
 		return
 	}
 
+	if Input.Email == "" {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "email is required",
+		})
+		return
+	}
+
 	_, err = respository.FindUserEmail(ac.Pool, Input.Email)
 	if err != nil {
 		ctx.JSON(404, models.Response{
 			Success: false,
-			Message: "Email not found",
+			Message: err.Error(),
 		})
 		return
 	}
@@ -153,6 +161,14 @@ func (ac AuthController) VerifCodeOtp(ctx *gin.Context){
 		ctx.JSON(400, models.Response{
 			Success: false,
 			Message: "Invalid JSON",
+		})
+		return
+	}
+
+	if Input.Email == "" {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "email is required",
 		})
 		return
 	}
@@ -195,9 +211,35 @@ func (ac AuthController) CreateNewPassword(ctx *gin.Context){
 		NewPassword string `json:"new_password"`
 	}
 
+	var users models.User
+
 	err := ctx.BindJSON(&Input)
 	if err != nil {
 		fmt.Println("Error Failed type request", err)
+	}
+
+	if Input.Email == "" {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "email is required",
+		})
+		return
+	}
+
+	if Input.NewPassword == "" {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "Password is required",
+		})
+		return
+	}
+
+	if len(Input.NewPassword) < 6 {
+		ctx.JSON(400, models.Response{
+			Success: false,
+			Message: "password must be at more 6 characters",
+		})
+		return
 	}
 
 	err = respository.UpdatePassword(ac.Pool, Input.Email, Input.NewPassword)
@@ -207,6 +249,13 @@ func (ac AuthController) CreateNewPassword(ctx *gin.Context){
 			Message: err.Error(),
 		})
 		return
+	}
+
+	if Input.NewPassword == users.Password {
+		ctx.JSON(401, models.Response{
+			Success: false,
+			Message: "The password entered must not be the same.",
+		})
 	}
 
 	ctx.JSON(200, models.Response{
