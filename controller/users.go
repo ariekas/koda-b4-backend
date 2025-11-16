@@ -70,7 +70,7 @@ func (uc UserController) DeleteUser(ctx *gin.Context){
 	if err != nil {
 		ctx.JSON(401, models.Response{
 			Success: false,
-			Message: "Error: Failed to delete user",
+			Message: err.Error(),
 		})
 		return
 	}
@@ -114,13 +114,13 @@ func (uc UserController) UpdateRole(ctx *gin.Context){
 			Success: false,
 			Message: "Error: Failed to update role user",
 		})
+		return
 	}
 
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Success update Role user",
 	})
-
 }
 
 func (uc UserController) GetUserLogin(ctx *gin.Context) {

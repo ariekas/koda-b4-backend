@@ -89,9 +89,22 @@ func GetDataUsers(pool *pgxpool.Pool, page int) (PaginationResponseUser, error) 
 }
 
 func DeleteUser(pool *pgxpool.Pool, userId int) error {
-	_, err := pool.Exec(context.Background(), "DELETE FROM users WHERE id = $1", userId)
-	return err
+	result, err := pool.Exec(context.Background(),
+		"DELETE FROM users WHERE id = $1",
+		userId,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to delete user, %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	return nil
 }
+
 
 func UpdateRole(pool *pgxpool.Pool, userId int, newRole string) error {
 	_, err := pool.Exec(context.Background(), "UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2", newRole, userId)
