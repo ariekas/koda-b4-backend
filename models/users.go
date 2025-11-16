@@ -1,6 +1,7 @@
 package models
 
 import (
+	"mime/multipart"
 	"time"
 )
 
@@ -47,7 +48,10 @@ var OtpForget = make(map[string]struct {
 })
 
 type UpdateProfileRequest struct {
-	Pic     *string `json:"pic" example:"https://example.com/profile.jpg"`
-	Phone   *string `json:"phone" example:"+628123456789"`
-	Address *string `json:"address" example:"Jl. Sudirman No. 123"`
+	Pic     *string          `json:"pic"`
+	Phone   *string          `json:"phone"`
+	Address *string          `json:"address"`
+
+	PicFile *multipart.FileHeader `json:"-"`
 }
+

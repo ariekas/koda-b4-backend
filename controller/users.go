@@ -3,6 +3,7 @@ package controller
 import (
 	"back-end-coffeShop/models"
 	"back-end-coffeShop/respository"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -159,13 +160,21 @@ func (uc UserController) UpdateProfile(ctx *gin.Context) {
 		return
 	}
 
+	userData := ctx.PostForm("data")
 	var input models.UpdateProfileRequest
-	if err := ctx.ShouldBindJSON(&input); err != nil {
-		ctx.JSON(400, models.Response{
-			Success: false,
-			Message: "Invalid input format",
-		})
-		return
+	if userData != "" {
+		if err := json.Unmarshal([]byte(userData), &input); err != nil {
+			ctx.JSON(400, models.Response{
+				Success: false,
+				Message: "Invalid JSON input",
+			})
+			return
+		}
+	}
+
+	file, err := ctx.FormFile("pic")
+	if err == nil {
+		input.PicFile = file
 	}
 
 	err = respository.UpdateProfile(uc.Pool, userId, input)
@@ -177,7 +186,7 @@ func (uc UserController) UpdateProfile(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(201, models.Response{
+	ctx.JSON(200, models.Response{
 		Success: true,
 		Message: "Profile updated successfully",
 	})

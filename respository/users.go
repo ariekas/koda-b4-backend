@@ -5,6 +5,10 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -95,31 +99,60 @@ func UpdateRole(pool *pgxpool.Pool, userId int, newRole string) error {
 }
 
 func UpdateProfile(pool *pgxpool.Pool, userId int, input models.UpdateProfileRequest) error {
-	tx, err := pool.Begin(context.Background())
+	ctx := context.Background()
+	tx, err := pool.Begin(ctx)
 	if err != nil {
-		fmt.Println("failed to start transaction", err)
+		return fmt.Errorf("failed to start transaction: %v", err)
 	}
-	defer tx.Rollback(context.Background())
+	defer tx.Rollback(ctx)
 
 	var profileId int
-	err = tx.QueryRow(context.Background(), `
+	err = tx.QueryRow(ctx, `
 		SELECT profile_id FROM users WHERE id = $1
 	`, userId).Scan(&profileId)
+
 	if err != nil {
-		fmt.Println("user not found or profile not assigned", err)
+		return fmt.Errorf("user not found or profile not assigned: %v", err)
 	}
 
-	_, err = tx.Exec(context.Background(), `
+	var fileName *string = nil
+
+	if input.PicFile != nil {
+		ext := strings.ToLower(filepath.Ext(input.PicFile.Filename))
+		if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+			return fmt.Errorf("unsupported image format (only jpg, jpeg, png)")
+		}
+
+		newName := fmt.Sprintf("profile_%d_%d%s", userId, time.Now().Unix(), ext)
+		savePath := "uploads/profile/" + newName
+
+		if err := os.MkdirAll("uploads/profile", os.ModePerm); err != nil {
+			return fmt.Errorf("failed to create upload folder: %v", err)
+		}
+
+		if err := SaveUploadedFile(input.PicFile, savePath); err != nil {
+			return fmt.Errorf("failed to save file: %v", err)
+		}
+
+		fileName = &newName
+	}
+
+	_, err = tx.Exec(ctx, `
 		UPDATE profile
-		SET pic = $1, phone = $2, address = $3, updated_at = NOW()
+		SET 
+			pic = COALESCE($1, pic),
+			phone = COALESCE($2, phone),
+			address = COALESCE($3, address),
+			updated_at = NOW()
 		WHERE id = $4
-	`, input.Pic, input.Phone, input.Address, profileId)
+	`, fileName, input.Phone, input.Address, profileId)
+
 	if err != nil {
-		fmt.Println("failed to update profile", err)
+		return fmt.Errorf("failed to update profile: %v", err)
 	}
 
-	if err = tx.Commit(context.Background()); err != nil {
-		fmt.Println("failed to commit transaction", err)
+	if err = tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
 	return nil
