@@ -5,6 +5,7 @@ import (
 	"back-end-coffeShop/models"
 	"back-end-coffeShop/respository"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -70,7 +71,41 @@ func (cc CartController) GetCart(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, models.Response{
 		Success: true,
-		Message: "Successfully fetched cart items",
+		Message: "Successfully get cart items",
 		Data:    cartItems,
+	})
+}
+
+func (cc CartController) DeleteCart(ctx *gin.Context){
+	userId := middelware.GetUserFromToken(ctx)
+	if userId == 0 {
+		ctx.JSON(http.StatusUnauthorized, models.Response{
+			Success: false,
+			Message: "Unauthorized: Invalid token",
+		})
+		return
+	}
+
+	cartId := ctx.Param("id")
+    id, err := strconv.Atoi(cartId)
+    if err != nil {
+        ctx.JSON(400, models.Response{
+            Success: false,
+            Message: "Invalid getting cart",
+        })
+        return
+    }
+
+	err = respository.DeleteCart(cc.Pool, userId, id)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, models.Response{
+			Success: false,
+			Message: "error: failed to delete cart",
+		})
+	}
+
+	ctx.JSON(http.StatusOK, models.Response{
+		Success: true,
+		Message: "Success deleting cart",
 	})
 }
