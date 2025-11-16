@@ -28,6 +28,7 @@ func (cpc CategoryProductController) GetAll(ctx *gin.Context) {
 			Success: false,
 			Message: "error: Failed to connect redis",
 		})
+		return
 	}
 
 	pageQuery := ctx.Query("page")
@@ -79,14 +80,6 @@ func (cpc CategoryProductController) Create(ctx *gin.Context) {
 	}
 
 	categorys, err := respository.CreateCategory(cpc.Pool, input)
-
-	if input.Name == categorys.Name {
-		ctx.JSON(401, models.Response{
-			Success: false,
-			Message: "error: category already exists",
-		})
-		return
-	}
 
 	if err != nil {
 		ctx.JSON(401, models.Response{
