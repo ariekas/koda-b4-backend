@@ -158,7 +158,7 @@ func UpdateProfile(pool *pgxpool.Pool, userId int, input models.UpdateProfileReq
 	return nil
 }
 
-func GetUserById(pool *pgxpool.Pool, userId int) (models.User, error) {
+func GetUserByToken(pool *pgxpool.Pool, userId int) (models.User, error) {
 	var user models.User
 	err := pool.QueryRow(context.Background(), `
 		SELECT 
@@ -179,8 +179,10 @@ func GetUserById(pool *pgxpool.Pool, userId int) (models.User, error) {
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
+
 	if err != nil {
-		fmt.Println("failed to get user profile", err)
+		return models.User{}, fmt.Errorf("failed to get user profile, %w", err)
 	}
+
 	return user, nil
 }

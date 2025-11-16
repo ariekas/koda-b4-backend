@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"back-end-coffeShop/lib/middelware"
 	"back-end-coffeShop/models"
 	"back-end-coffeShop/respository"
 	"encoding/json"
@@ -122,29 +123,29 @@ func (uc UserController) UpdateRole(ctx *gin.Context){
 
 }
 
-func (uc UserController) GetUserById(ctx *gin.Context) {
-	id := ctx.Param("id")
-	userId, err := strconv.Atoi(id)
-	if err != nil {
-		ctx.JSON(400, models.Response{
+func (uc UserController) GetUserLogin(ctx *gin.Context) {
+	userId := middelware.GetUserFromToken(ctx)
+
+	if userId == 0 {
+		ctx.JSON(401, models.Response{
 			Success: false,
-			Message: "Invalid user ID",
+			Message: "Unauthorized: Invalid or missing token",
 		})
 		return
 	}
 
-	user, err := respository.GetUserById(uc.Pool, userId)
+	user, err := respository.GetUserByToken(uc.Pool, userId)
 	if err != nil {
 		ctx.JSON(404, models.Response{
 			Success: false,
-			Message: "User not found",
+			Message: err.Error(),
 		})
 		return
 	}
 
 	ctx.JSON(200, models.Response{
 		Success: true,
-		Message: "Success getting user profile",
+		Message: "Success getting user",
 		Data:    user,
 	})
 }

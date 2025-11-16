@@ -20,7 +20,7 @@ func UserRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
 	r.POST("/cart", cartController.AddCart)
 	r.GET("/cart", cartController.GetCart)
 	r.POST("/transactions",transactionsControlelr.CreateTransaction)
-	r.GET("/users/:id", usersController.GetUserById)
+	r.GET("/user", usersController.GetUserLogin)
 	r.PATCH("user/profile/:id", usersController.UpdateProfile)
 	r.GET("/historys", historyController.GetHistorys)
 	r.GET("/history/:id", historyController.DetailHistory)
