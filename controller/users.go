@@ -104,7 +104,7 @@ func (uc UserController) UpdateRole(ctx *gin.Context){
 	err = ctx.ShouldBindJSON(&models.InputNewRole)
 
 	if err != nil {
-		fmt.Println("Error: ", err)
+		fmt.Println("Error: failed type request ", err)
 	}
 
 	err = respository.UpdateRole(uc.Pool, userId, models.InputNewRole.Role)
@@ -112,7 +112,7 @@ func (uc UserController) UpdateRole(ctx *gin.Context){
 	if err != nil {
 		ctx.JSON(401, models.Response{
 			Success: false,
-			Message: "Error: Failed to update role user",
+			Message: err.Error(),
 		})
 		return
 	}

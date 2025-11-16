@@ -107,8 +107,23 @@ func DeleteUser(pool *pgxpool.Pool, userId int) error {
 
 
 func UpdateRole(pool *pgxpool.Pool, userId int, newRole string) error {
-	_, err := pool.Exec(context.Background(), "UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2", newRole, userId)
-	return err
+	if strings.TrimSpace(newRole) == "" {
+		return fmt.Errorf("role is required")
+	}
+
+	result, err := pool.Exec(context.Background(),
+		"UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2",
+		newRole, userId,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update role: %v", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	return nil
 }
 
 func UpdateProfile(pool *pgxpool.Pool, userId int, input models.UpdateProfileRequest) error {
