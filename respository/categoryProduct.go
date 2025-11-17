@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetCategories(pool *pgxpool.Pool, page int) ([]models.CategoryProduct, error) {
+func GetCategories(pool *pgxpool.Pool, page int) (models.PaginationResponse, error) {
 	var categories []models.CategoryProduct
 	limit := 50
 	offset := (page - 1) * limit
@@ -17,19 +17,19 @@ func GetCategories(pool *pgxpool.Pool, page int) ([]models.CategoryProduct, erro
 	var total int
 	err := pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM category_products").Scan(&total)
 	if err != nil {
-		return nil, fmt.Errorf("Error counting products: %w", err)
+		return models.PaginationResponse{} ,fmt.Errorf("Error counting products: %w", err)
 	}
 
 	rows, err := pool.Query(context.Background(), "SELECT id, name FROM category_products OFFSET $1 LIMIT $2", offset, limit)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get categories, %w", err)
+		return models.PaginationResponse{}, fmt.Errorf("failed to get categories, %w", err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var category models.CategoryProduct
 		if err := rows.Scan(&category.Id, &category.Name); err != nil {
-			return nil, fmt.Errorf("error scanning category: %w", err)
+			return models.PaginationResponse{}, fmt.Errorf("error scanning category: %w", err)
 		}
 		categories = append(categories, category)
 	}
@@ -47,7 +47,14 @@ func GetCategories(pool *pgxpool.Pool, page int) ([]models.CategoryProduct, erro
 		links["next"] = "null"
 	}
 
-	return categories, nil
+	return models.PaginationResponse{
+		Data:       categories,
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: totalPages,
+		Links:      links,
+	}, nil
 }
 
 func CreateCategory(pool *pgxpool.Pool, input models.CategoryProduct) (models.CategoryProduct, error) {
