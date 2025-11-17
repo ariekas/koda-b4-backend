@@ -27,7 +27,7 @@ type Transaction struct {
 }
 
 type InputNewStatus struct {
-	Status string `json:"status" example:"completed" binding:"required,oneof=pending processing completed cancelled"`
+	StatusTransactionID int `json:"status_transactions_id" binding:"required"`
 }
 
 type PaginationResponseTransaction struct {

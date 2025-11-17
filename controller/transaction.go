@@ -113,7 +113,7 @@ func (tc TransactionsController) UpdateTransactionStatus(ctx *gin.Context) {
 		return
 	}
 
-	if err := respository.UpdateTransactionStatus(tc.Pool, transactionId, input.Status); err != nil {
+	if err := respository.UpdateTransactionStatus(tc.Pool, transactionId, input.StatusTransactionID); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.Response{
 			Success: false,
 			Message: fmt.Sprintf("Failed to update transaction status: %v", err),

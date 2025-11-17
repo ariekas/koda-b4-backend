@@ -24,45 +24,36 @@ func GetTransactions(pool *pgxpool.Pool, page int, limit int) (models.Pagination
 	query := `
 	SELECT 
 		t.id,
-		t.user_id,
+		t.users_id AS user_id,
 		u.fullname,
 		pr.address,
 		pr.phone,
-		t.status,
+		st.status,
 		t.total,
-		t.payment_method,
-		d.type AS delivery_name,
-		json_agg(
-			json_build_object(
-				'product_id', ti.product_id,
-				'product_name', p.name,
-				'quantity', ti.quantity,
-				'subtotal', ti.subtotal
-			)
-		) FILTER (WHERE ti.id IS NOT NULL) AS items,
+		pm.name AS payment_method,
+		d.name AS delivery_name,
 		t.created_at,
 		t.updated_at
 	FROM transactions t
-	LEFT JOIN transaction_items ti ON t.id = ti.transaction_id
-	LEFT JOIN products p ON p.id = ti.product_id
-	LEFT JOIN users u ON u.id = t.user_id
+	LEFT JOIN users u ON u.id = t.users_id
 	LEFT JOIN profile pr ON pr.id = u.profile_id
-	LEFT JOIN deliverys d ON d.transaction_id = t.id
-	GROUP BY t.id, u.fullname, pr.address, pr.phone, d.type
+	LEFT JOIN deliverys d ON d.id = t.deliverys_id
+	LEFT JOIN payment_methods pm ON pm.id = t.payment_methods_id
+	LEFT JOIN status_transactions st ON st.id = t.status_transactions_id
 	ORDER BY t.id DESC
 	OFFSET $1 LIMIT $2
 	`
 
 	rows, err := pool.Query(context.Background(), query, offset, limit)
 	if err != nil {
-		fmt.Println("Error: Failed get data transaction", err)
+		fmt.Println("Error: Failed get data transaction:", err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var t models.Transaction
-		var itemsJSON []byte
 
+        // Scan tanpa items
 		err := rows.Scan(
 			&t.ID,
 			&t.UserID,
@@ -73,61 +64,60 @@ func GetTransactions(pool *pgxpool.Pool, page int, limit int) (models.Pagination
 			&t.Total,
 			&t.PaymentMethod,
 			&t.DeliveryName,
-			&itemsJSON,
 			&t.CreatedAt,
 			&t.UpdatedAt,
 		)
+
 		if err != nil {
 			fmt.Println("Error scanning transaction:", err)
 			continue
 		}
 
-		json.Unmarshal(itemsJSON, &t.Items)
 		transactions = append(transactions, t)
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
-	links := make(map[string]string)
+
+	links := map[string]string{
+		"prev": "null",
+		"next": "null",
+	}
 
 	if page > 1 {
 		links["prev"] = fmt.Sprintf("/transactions?page=%d", page-1)
-	} else {
-		links["prev"] = "null"
 	}
 	if page < totalPages {
 		links["next"] = fmt.Sprintf("/transactions?page=%d", page+1)
-	} else {
-		links["next"] = "null"
 	}
 
-	response := models.PaginationResponseTransaction{
+	return models.PaginationResponseTransaction{
 		Data:       transactions,
 		Page:       page,
 		Limit:      limit,
 		Total:      total,
 		TotalPages: totalPages,
 		Links:      links,
-	}
-
-	return response, nil
+	}, nil
 }
+
 
 func GetTransactionById(pool *pgxpool.Pool, transactionId int) (models.Transaction, error) {
 	var t models.Transaction
+
 	query := `
 	SELECT 
 		t.id,
-		t.user_id,
+		t.users_id,
 		u.fullname,
 		pr.address,
 		pr.phone,
-		t.status,
+		st.status,
 		t.total,
-		t.payment_method,
-		d.type AS delivery_name,
-		json_agg(
-			json_build_object(
-				'product_id', ti.product_id,
+		pm.name AS payment_method,
+		d.name AS delivery_name,
+		JSON_AGG(
+			JSON_BUILD_OBJECT(
+				'product_id', ti.products_id,
 				'product_name', p.name,
 				'quantity', ti.quantity,
 				'subtotal', ti.subtotal
@@ -136,17 +126,28 @@ func GetTransactionById(pool *pgxpool.Pool, transactionId int) (models.Transacti
 		t.created_at,
 		t.updated_at
 	FROM transactions t
-	LEFT JOIN transaction_items ti ON t.id = ti.transaction_id
-	LEFT JOIN products p ON p.id = ti.product_id
-	LEFT JOIN users u ON u.id = t.user_id
+	LEFT JOIN transaction_items ti ON t.id = ti.transactions_id
+	LEFT JOIN products p ON p.id = ti.products_id
+	LEFT JOIN users u ON u.id = t.users_id
 	LEFT JOIN profile pr ON pr.id = u.profile_id
-	LEFT JOIN deliverys d ON d.transaction_id = t.id
+	LEFT JOIN deliverys d ON d.id = t.deliverys_id
+	LEFT JOIN payment_methods pm ON pm.id = t.payment_methods_id
+	LEFT JOIN status_transactions st ON st.id = t.status_transactions_id
 	WHERE t.id = $1
-	GROUP BY t.id, u.fullname, pr.address, pr.phone, d.type
+	GROUP BY 
+		t.id,
+		u.fullname,
+		pr.address,
+		pr.phone,
+		st.status,
+		pm.name,
+		d.name
 	`
 
 	row := pool.QueryRow(context.Background(), query, transactionId)
+
 	var itemsJSON []byte
+
 	err := row.Scan(
 		&t.ID,
 		&t.UserID,
@@ -161,23 +162,41 @@ func GetTransactionById(pool *pgxpool.Pool, transactionId int) (models.Transacti
 		&t.CreatedAt,
 		&t.UpdatedAt,
 	)
+
 	if err != nil {
 		fmt.Println("Error scanning transaction:", err)
+		return t, err
 	}
 
-	json.Unmarshal(itemsJSON, &t.Items)
+	if itemsJSON != nil {
+		json.Unmarshal(itemsJSON, &t.Items)
+	} else {
+		t.Items = []models.TransactionItem{}
+	}
+
 	return t, nil
 }
 
-func UpdateTransactionStatus(pool *pgxpool.Pool, transactionId int, newStatus string) error {
-	_, err := pool.Exec(context.Background(),
-		"UPDATE transactions SET status = $1, updated_at = NOW() WHERE id = $2",
-		newStatus, transactionId,
-	)
-	if err != nil {
-		fmt.Println("Error updating transaction status:", err)
-	}
-	return err
+
+
+
+func UpdateTransactionStatus(pool *pgxpool.Pool, transactionId int, newStatusID int) error {
+
+    cmdTag, err := pool.Exec(context.Background(),
+        "UPDATE transactions SET status_transactions_id = $1, updated_at = NOW() WHERE id = $2",
+        newStatusID, transactionId,
+    )
+
+    if err != nil {
+        fmt.Println("Error updating transaction status:", err)
+        return err
+    }
+
+    if cmdTag.RowsAffected() == 0 {
+        return fmt.Errorf("transaction with id %d not found", transactionId)
+    }
+
+    return nil
 }
 
 func GetCartTransaction(pool *pgxpool.Pool, userID int) ([]models.CartItems, error) {
@@ -334,7 +353,7 @@ func CreateTransactionItem(pool *pgxpool.Pool, tx pgx.Tx, transactionID int, ite
 	return nil
 }
 
-func ClearCart(pool *pgxpool.Pool,tx pgx.Tx, userID int) error {
+func ClearCart(pool *pgxpool.Pool, tx pgx.Tx, userID int) error {
 	_, err := tx.Exec(context.Background(), `DELETE FROM carts WHERE users_id=$1`, userID)
 
 	return err
