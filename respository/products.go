@@ -3,6 +3,7 @@ package respository
 import (
 	"back-end-coffeShop/models"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -24,31 +25,65 @@ func GetProducts(pool *pgxpool.Pool, page int) (models.PaginationResponse, error
 	err := pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM products").Scan(&total)
 	if err != nil {
 		fmt.Println("Error counting products:", err)
+		return models.PaginationResponse{}, err
 	}
 
 	rows, err := pool.Query(context.Background(), `
-	SELECT p.id, p.name, p.price, p.description, p.stock, 
-	       p.is_flashsale, p.is_favorite_product, p.category_products_id, 
-	       COALESCE(ip.image, '') AS image,
-	       p.created_at, p.updated_at
+	SELECT 
+	    p.id, 
+	    p.name, 
+	    p.price, 
+	    p.description, 
+	    p.stock, 
+	    p.is_flashsale, 
+	    p.is_favorite_product, 
+	    p.category_products_id,
+	    COALESCE(
+	        JSON_AGG(
+	            JSON_BUILD_OBJECT('id', ip.id, 'url', ip.image)
+	        ) FILTER (WHERE ip.id IS NOT NULL), '[]'
+	    ) AS images,
+	    p.created_at, 
+	    p.updated_at
 	FROM products p
 	LEFT JOIN product_images ip ON ip.products_id = p.id
+	GROUP BY p.id
 	ORDER BY p.id
 	OFFSET $1 LIMIT $2
 	`, offset, limit)
 	if err != nil {
 		fmt.Println("Error: Failed get data product", err)
+		return models.PaginationResponse{}, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(&p.Id, &p.Name, &p.Price, &p.Description, &p.Stock,
-			&p.IsFlashSale, &p.IsFavoriteProduct, &p.CategoryProductId, &p.Images,
-			&p.CreatedAt, &p.UpdatedAt); err != nil {
+		var imagesJSON []byte
+
+		err := rows.Scan(
+			&p.Id,
+			&p.Name,
+			&p.Price,
+			&p.Description,
+			&p.Stock,
+			&p.IsFlashSale,
+			&p.IsFavoriteProduct,
+			&p.CategoryProductId,
+			&imagesJSON,
+			&p.CreatedAt,
+			&p.UpdatedAt,
+		)
+		if err != nil {
 			fmt.Println("Error scanning product:", err)
 			continue
 		}
+
+		if err := json.Unmarshal(imagesJSON, &p.Images); err != nil {
+			fmt.Println("Error unmarshalling images:", err)
+			p.Images = []models.ImageProduct{}
+		}
+
 		products = append(products, p)
 	}
 
@@ -74,6 +109,7 @@ func GetProducts(pool *pgxpool.Pool, page int) (models.PaginationResponse, error
 		Links:      links,
 	}, nil
 }
+
 
 func CreateProduct(pool *pgxpool.Pool, input models.Product) error {
 	now := time.Now()
