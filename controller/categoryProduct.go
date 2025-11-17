@@ -6,6 +6,7 @@ import (
 	"back-end-coffeShop/respository"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -18,17 +19,13 @@ type CategoryProductController struct {
 	Pool *pgxpool.Pool
 }
 
-var path  = "/categorys*"
+var path = "/categorys*"
 
 func (cpc CategoryProductController) GetAll(ctx *gin.Context) {
 	cache, err := config.Redis().Get(context.Background(), ctx.Request.RequestURI).Result()
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.Response{
-			Success: false,
-			Message: "error: Failed to connect redis",
-		})
-		return
+		fmt.Println("Error: Redis", err)
 	}
 
 	pageQuery := ctx.Query("page")
@@ -168,7 +165,7 @@ func (cpc CategoryProductController) Delete(ctx *gin.Context) {
 	}
 
 	config.InvalidateRedis(path)
-	
+
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Success deleting category",
