@@ -225,7 +225,7 @@ func (pc ProductController) CreateImageProduct(ctx *gin.Context) {
 		return
 	}
 
-	images, err := respository.CreateImageProduct(pc.Pool, productId, files)
+	images, err := respository.CreateImageProduct(pc.Pool,ctx, productId, files)
 	if err != nil {
 		ctx.JSON(400, models.Response{Success: false, Message: err.Error()})
 		return

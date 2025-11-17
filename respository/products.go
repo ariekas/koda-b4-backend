@@ -1,6 +1,7 @@
 package respository
 
 import (
+	"back-end-coffeShop/lib/config"
 	"back-end-coffeShop/models"
 	"context"
 	"encoding/json"
@@ -13,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -302,22 +304,43 @@ func DeleteProduct(pool *pgxpool.Pool, id int) error {
 	return err
 }
 
-func CreateImageProduct(pool *pgxpool.Pool, productId int, files []*multipart.FileHeader) ([]models.ImageProduct, error) {
+func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, files []*multipart.FileHeader) ([]models.ImageProduct, error) {
 	var images []models.ImageProduct
 	now := time.Now()
 
-	var alreadyProduct bool
-	err := pool.QueryRow(context.Background(), "SELECT EXISTS(SELECT 1 FROM products WHERE id=$1)", productId).Scan(&alreadyProduct)
-	if err != nil || !alreadyProduct {
+	var exists bool
+	err := pool.QueryRow(context.Background(),
+		"SELECT EXISTS(SELECT 1 FROM products WHERE id=$1)",
+		productId,
+	).Scan(&exists)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed checking product: %v", err)
+	}
+	if !exists {
 		return nil, fmt.Errorf("product not found")
 	}
 
 	maxSize := int64(5 * 1024 * 1024)
-	allowedTypes := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
+	allowedTypes := map[string]bool{
+		".jpg":  true,
+		".jpeg": true,
+		".png":  true,
+		".webp": true,
+	}
 
-	os.MkdirAll("imagesProduct", os.ModePerm)
+	localPath := "uploads/imageProducts"
+
+	useCloud := os.Getenv("CLOUDINARY_API_KEY") != "" &&
+		os.Getenv("CLOUDINARY_API_SECRET") != "" &&
+		os.Getenv("CLOUDINARY_NAME") != ""
+
+	if !useCloud {
+		os.MkdirAll(localPath, 0755)
+	}
 
 	for _, file := range files {
+
 		if file.Size > maxSize {
 			return nil, fmt.Errorf("file %s melebihi 5MB", file.Filename)
 		}
@@ -328,27 +351,40 @@ func CreateImageProduct(pool *pgxpool.Pool, productId int, files []*multipart.Fi
 		}
 
 		fileName := fmt.Sprintf("%d_%s", time.Now().UnixNano(), file.Filename)
-		filePath := fmt.Sprintf("imagesProduct/%s", fileName)
+		var finalURL string
 
-		if err := SaveUploadedFile(file, filePath); err != nil {
-			return nil, err
+		if useCloud {
+			imageURL, err := config.UploaderFile(file, fileName)
+			if err != nil {
+				return nil, fmt.Errorf("cloud upload failed: %v", err)
+			}
+			finalURL = imageURL
+
+		} else {
+			savePath := filepath.Join(localPath, fileName)
+
+			if err := ctx.SaveUploadedFile(file, savePath); err != nil {
+				return nil, fmt.Errorf("failed upload local: %v", err)
+			}
+
+			finalURL = "uploads/imageProducts/" + fileName
 		}
 
 		var newID int
 		err = pool.QueryRow(context.Background(), `
 			INSERT INTO product_images (products_id, image, created_at, updated_at)
-			VALUES ($1,$2,$3,$4)
+			VALUES ($1, $2, $3, $4)
 			RETURNING id
-		`, productId, filePath, now, now).Scan(&newID)
+		`, productId, finalURL, now, now).Scan(&newID)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to save image db: %v", err)
 		}
 
 		images = append(images, models.ImageProduct{
 			Id:        newID,
 			ProductId: productId,
-			Image:     filePath,
+			Image:     finalURL,
 			CreatedAt: now,
 			UpdatedAt: now,
 		})
