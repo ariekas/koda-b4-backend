@@ -70,30 +70,37 @@ func GetUserCartProduct(pool *pgxpool.Pool, userId int) ([]models.CartItem, erro
 	var items []models.CartItem
 
 	rows, err := pool.Query(ctx, `
-		SELECT 
-			c.id,
-			p.id AS product_id,
-			p.name AS product_name,
-			COALESCE(sp.id, 0) AS size_id,
-			COALESCE(sp.name, '') AS size_name,
-			COALESCE(vp.id, 0) AS variant_id,
-			COALESCE(vp.name, '') AS variant_name,
-			c.quantity,
-			(p.price 
-				+ COALESCE(sp.additional_costs, 0) 
-				+ COALESCE(vp.additional_costs, 0)
-			) * c.quantity AS subtotal,
-			COALESCE(pi.image, '') AS image_url
-		FROM carts c
-		JOIN products p ON c.products_id = p.id
-		LEFT JOIN size_products sp ON c.size_products_id = sp.id
-		LEFT JOIN variant_products vp ON c.variant_products_id = vp.id
-		LEFT JOIN product_images pi ON pi.products_id = p.id
-		WHERE c.users_id = $1
-		GROUP BY 
-			c.id, p.id, p.name, sp.id, sp.name, vp.id, vp.name, pi.image, 
-			p.price, sp.additional_costs, vp.additional_costs, c.quantity
-	`, userId)
+	SELECT 
+		c.id,
+		p.id AS product_id,
+		p.name AS product_name,
+		COALESCE(sp.id, 0) AS size_id,
+		COALESCE(sp.name, '') AS size_name,
+		COALESCE(vp.id, 0) AS variant_id,
+		COALESCE(vp.name, '') AS variant_name,
+		c.quantity,
+		(p.price 
+			+ COALESCE(sp.additional_costs, 0) 
+			+ COALESCE(vp.additional_costs, 0)
+		) * c.quantity AS subtotal,
+		COALESCE(pi.image, '') AS image_url
+	FROM carts c
+	JOIN products p ON c.products_id = p.id
+	LEFT JOIN size_products sp ON c.size_products_id = sp.id
+	LEFT JOIN variant_products vp ON c.variant_products_id = vp.id
+	LEFT JOIN LATERAL (
+		SELECT image
+		FROM product_images
+		WHERE products_id = p.id
+		ORDER BY id ASC
+		LIMIT 1
+	) pi ON true
+	WHERE c.users_id = $1
+	GROUP BY 
+		c.id, p.id, p.name, sp.id, sp.name, vp.id, vp.name,
+		p.price, sp.additional_costs, vp.additional_costs, c.quantity, pi.image
+`, userId)
+
 
 	if err != nil {
 		fmt.Println("failed to query cart items", err)
