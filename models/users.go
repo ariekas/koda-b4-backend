@@ -41,10 +41,11 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
-var OtpForget = make(map[string]struct {
-	Code      string
-	ExpiresAt time.Time
-})
+var OtpForget = map[string]struct{
+    Code       string
+    ExpiresAt  time.Time
+    Verified   bool
+}{}
 
 type UpdateProfileRequest struct {
 	Pic     *string          `json:"pic"`

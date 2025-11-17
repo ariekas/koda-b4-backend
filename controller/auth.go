@@ -117,14 +117,12 @@ func (ac AuthController) Login(ctx *gin.Context) {
 	})
 }
 
-func (ac AuthController) ForgetPassword(ctx *gin.Context){
-	var Input struct{
-		Email string `json:"email"`  
+func (ac AuthController) ForgetPassword(ctx *gin.Context) {
+	var Input struct {
+		Email string `json:"email"`
 	}
 
-	err := ctx.BindJSON(&Input)
-
-	if err != nil {
+	if err := ctx.BindJSON(&Input); err != nil {
 		ctx.JSON(400, models.Response{
 			Success: false,
 			Message: "Invalid JSON",
@@ -140,39 +138,41 @@ func (ac AuthController) ForgetPassword(ctx *gin.Context){
 		return
 	}
 
-	_, err = respository.FindUserEmail(ac.Pool, Input.Email)
+	_, err := respository.FindUserEmail(ac.Pool, Input.Email)
 	if err != nil {
 		ctx.JSON(404, models.Response{
 			Success: false,
-			Message: err.Error(),
+			Message: "email not found",
 		})
 		return
 	}
 
-	otp := fmt.Sprintf("%05d", time.Now().UnixNano()%1000000)
-	timeExp := time.Now().Add(5 * time.Minute)
+	otp := fmt.Sprintf("%06d", time.Now().UnixNano()%1000000)
 
 	models.OtpForget[Input.Email] = struct {
-		Code string; 
+		Code      string
 		ExpiresAt time.Time
-		}{Code: otp, ExpiresAt: timeExp}
+		Verified  bool
+	}{
+		Code:      otp,
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+		Verified:  false,
+	}
 
-		ctx.JSON(200, models.Response{
-			Success: true,
-			Message: "OTP has been sent to your email",
-			Data: otp,
-		})
+	ctx.JSON(200, models.Response{
+		Success: true,
+		Message: "OTP has been sent to your email",
+		Data:    otp,
+	})
 }
 
-func (ac AuthController) VerifCodeOtp(ctx *gin.Context){
+func (ac AuthController) VerifCodeOtp(ctx *gin.Context) {
 	var Input struct {
 		Email string `json:"email"`
 		OTP   string `json:"otp"`
 	}
 
-	err := ctx.BindJSON(&Input)
-
-	if err != nil {
+	if err := ctx.BindJSON(&Input); err != nil {
 		ctx.JSON(400, models.Response{
 			Success: false,
 			Message: "Invalid JSON",
@@ -180,24 +180,24 @@ func (ac AuthController) VerifCodeOtp(ctx *gin.Context){
 		return
 	}
 
-	if Input.Email == "" {
+	if Input.Email == "" || Input.OTP == "" {
 		ctx.JSON(400, models.Response{
 			Success: false,
-			Message: "email is required",
+			Message: "email & otp are required",
 		})
 		return
 	}
 
-	otp, exists := models.OtpForget[Input.Email]
+	data, exists := models.OtpForget[Input.Email]
 	if !exists {
 		ctx.JSON(404, models.Response{
 			Success: false,
-			Message: "OTP not found or expired",
+			Message: "OTP not found",
 		})
 		return
 	}
 
-	if time.Now().After(otp.ExpiresAt) {
+	if time.Now().After(data.ExpiresAt) {
 		delete(models.OtpForget, Input.Email)
 		ctx.JSON(400, models.Response{
 			Success: false,
@@ -206,7 +206,7 @@ func (ac AuthController) VerifCodeOtp(ctx *gin.Context){
 		return
 	}
 
-	if otp.Code != Input.OTP {
+	if data.Code != Input.OTP {
 		ctx.JSON(401, models.Response{
 			Success: false,
 			Message: "Invalid OTP",
@@ -214,52 +214,42 @@ func (ac AuthController) VerifCodeOtp(ctx *gin.Context){
 		return
 	}
 
+	data.Verified = true
+	models.OtpForget[Input.Email] = data
+
 	ctx.JSON(200, models.Response{
 		Success: true,
 		Message: "OTP verified successfully",
 	})
 }
 
-func (ac AuthController) CreateNewPassword(ctx *gin.Context){
-	var Input struct{
+func (ac AuthController) CreateNewPassword(ctx *gin.Context) {
+	var Input struct {
 		Email       string `json:"email"`
 		NewPassword string `json:"new_password"`
 	}
 
-	err := ctx.BindJSON(&Input)
-	if err != nil {
-		fmt.Println("Error Failed type request", err)
-	}
-
-	if Input.Email == "" {
+	if err := ctx.ShouldBindJSON(&Input); err != nil {
 		ctx.JSON(400, models.Response{
 			Success: false,
-			Message: "email is required",
+			Message: "Invalid JSON",
 		})
 		return
 	}
 
-	if Input.NewPassword == "" {
+	if Input.Email == "" || Input.NewPassword == "" {
 		ctx.JSON(400, models.Response{
 			Success: false,
-			Message: "Password is required",
+			Message: "email & new_password are required",
 		})
 		return
 	}
 
-	if len(Input.NewPassword) < 6 {
-		ctx.JSON(400, models.Response{
+	otpData, exists := models.OtpForget[Input.Email]
+	if !exists || !otpData.Verified {
+		ctx.JSON(403, models.Response{
 			Success: false,
-			Message: "password must be at more 6 characters",
-		})
-		return
-	}
-
-	err = respository.UpdatePassword(ac.Pool, Input.Email, Input.NewPassword)
-	if err != nil {
-		ctx.JSON(500, models.Response{
-			Success: false,
-			Message: err.Error(),
+			Message: "OTP is not verified",
 		})
 		return
 	}
@@ -281,6 +271,16 @@ func (ac AuthController) CreateNewPassword(ctx *gin.Context){
 		})
 		return
 	}
+
+	if err := respository.UpdatePassword(ac.Pool, Input.Email, Input.NewPassword); err != nil {
+		ctx.JSON(500, models.Response{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	delete(models.OtpForget, Input.Email)
 
 	ctx.JSON(200, models.Response{
 		Success: true,
