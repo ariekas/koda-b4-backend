@@ -77,15 +77,14 @@ func GetProducts(pool *pgxpool.Pool, page int) (models.PaginationResponse, error
 
 func CreateProduct(pool *pgxpool.Pool, input models.Product) error {
 	now := time.Now()
-	var discount float64
-	priceDiscount := input.Price
+	priceDiscount := 0.0 
 
 	if input.DiscountsId != nil {
+		var discount float64
 		err := pool.QueryRow(context.Background(),
 			"SELECT diskon FROM discounts WHERE id = $1",
 			input.DiscountsId,
 		).Scan(&discount)
-
 		if err != nil {
 			return fmt.Errorf("failed to get discount: %w", err)
 		}
