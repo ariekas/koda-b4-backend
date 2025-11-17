@@ -11,13 +11,13 @@ import (
 
 func GetCategories(pool *pgxpool.Pool, page int) (models.PaginationResponse, error) {
 	var categories []models.CategoryProduct
-	limit := 50
+	limit := 5
 	offset := (page - 1) * limit
 
 	var total int
 	err := pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM category_products").Scan(&total)
 	if err != nil {
-		return models.PaginationResponse{} ,fmt.Errorf("Error counting products: %w", err)
+		return models.PaginationResponse{} ,fmt.Errorf("error counting products: %w", err)
 	}
 
 	rows, err := pool.Query(context.Background(), "SELECT id, name FROM category_products OFFSET $1 LIMIT $2", offset, limit)
