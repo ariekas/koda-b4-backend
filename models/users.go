@@ -30,7 +30,6 @@ type RegisterRequest struct {
 	Fullname string `json:"fullname" example:"John Doe" binding:"required,min=3,max=100"`
 	Email    string `json:"email" example:"john@example.com" binding:"required,email"`
 	Password string `json:"password" example:"123456" binding:"required,min=6"`
-	Role     string `json:"role" example:"customer" binding:"required,oneof=admin user"`
 }
 
 type LoginRequest struct {

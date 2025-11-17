@@ -15,46 +15,43 @@ func Register(ctx *gin.Context, pool *pgxpool.Pool) (models.User, error) {
 	var input models.RegisterRequest
 	var checkEmail bool
 
-	err := ctx.BindJSON(&input)
-	if err != nil {
-		fmt.Println("Error: Invalid type much json")
+	if err := ctx.BindJSON(&input); err != nil {
+		return models.User{}, fmt.Errorf("invalid request body")
 	}
 
 	if input.Fullname == "" {
 		return models.User{}, fmt.Errorf("fullname is required")
 	}
-	
 	if input.Email == "" {
 		return models.User{}, fmt.Errorf("email is required")
 	}
-	
-	if input.Role == "" {
-		return models.User{}, fmt.Errorf("role is required")
-	}
-	
 	if input.Password == "" {
 		return models.User{}, fmt.Errorf("password is required")
 	}
-	
 	if len(input.Password) <= 6 {
-		return models.User{}, fmt.Errorf("password must be at more 6 characters")
+		return models.User{}, fmt.Errorf("password must be more than 6 characters")
 	}
 
 	argon := argon2.DefaultConfig()
 	hash, err := argon.HashEncoded([]byte(input.Password))
 	if err != nil {
-		fmt.Println("Error : Failed to hash password")
+		return models.User{}, fmt.Errorf("failed to hash password")
 	}
 
-	err = pool.QueryRow(context.Background(), `SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)`, input.Email).Scan(&checkEmail)
+	err = pool.QueryRow(
+		context.Background(),
+		`SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)`,
+		input.Email,
+	).Scan(&checkEmail)
 
 	if err != nil {
-		fmt.Println("Error checking email:", err)
+		return models.User{}, fmt.Errorf("error checking email")
 	}
-	
 	if checkEmail {
 		return models.User{}, fmt.Errorf("email already registered")
 	}
+
+	role := "user"
 
 	now := time.Now()
 	var profileID *int = nil
@@ -63,17 +60,17 @@ func Register(ctx *gin.Context, pool *pgxpool.Pool) (models.User, error) {
 		context.Background(),
 		`INSERT INTO users (fullname, email, password, role, profile_id, created_at, updated_at) 
 		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		input.Fullname, input.Email, hash, input.Role, profileID, now, now,
+		input.Fullname, input.Email, hash, role, profileID, now, now,
 	)
 	if err != nil {
-		fmt.Println("Error insert user:", err)
+		return models.User{}, fmt.Errorf("failed to insert user")
 	}
 
 	user := models.User{
 		Fullname:  input.Fullname,
 		Email:     input.Email,
 		Password:  string(hash),
-		Role:      input.Role,
+		Role:      role,
 		ProfileID: profileID,
 		CreatedAt: &now,
 		UpdatedAt: &now,
@@ -81,6 +78,7 @@ func Register(ctx *gin.Context, pool *pgxpool.Pool) (models.User, error) {
 
 	return user, nil
 }
+
 
 func FindUserEmail(pool *pgxpool.Pool, email string) (models.User, error) {
 	var user models.User
