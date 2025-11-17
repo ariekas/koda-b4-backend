@@ -134,13 +134,37 @@ func UpdateProfile(pool *pgxpool.Pool, userId int, input models.UpdateProfileReq
 	}
 	defer tx.Rollback(ctx)
 
-	var profileId int
+	var profileId *int
 	err = tx.QueryRow(ctx, `
 		SELECT profile_id FROM users WHERE id = $1
 	`, userId).Scan(&profileId)
 
 	if err != nil {
-		return fmt.Errorf("user not found or profile not assigned: %v", err)
+		return fmt.Errorf("failed to get user profile: %v", err)
+	}
+
+	if profileId == nil {
+		var newProfileId int
+
+		err = tx.QueryRow(ctx, `
+			INSERT INTO profile (pic, phone, address, created_at, updated_at)
+			VALUES ('', '', '', NOW(), NOW())
+			RETURNING id
+		`).Scan(&newProfileId)
+
+		if err != nil {
+			return fmt.Errorf("failed to create new profile: %v", err)
+		}
+
+		_, err = tx.Exec(ctx, `
+			UPDATE users SET profile_id = $1 WHERE id = $2
+		`, newProfileId, userId)
+
+		if err != nil {
+			return fmt.Errorf("failed to assign new profile to user: %v", err)
+		}
+
+		profileId = &newProfileId
 	}
 
 	var fileName *string = nil
@@ -173,7 +197,7 @@ func UpdateProfile(pool *pgxpool.Pool, userId int, input models.UpdateProfileReq
 			address = COALESCE($3, address),
 			updated_at = NOW()
 		WHERE id = $4
-	`, fileName, input.Phone, input.Address, profileId)
+	`, fileName, input.Phone, input.Address, *profileId)
 
 	if err != nil {
 		return fmt.Errorf("failed to update profile: %v", err)

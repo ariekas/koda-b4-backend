@@ -151,15 +151,7 @@ func (uc UserController) GetUserLogin(ctx *gin.Context) {
 }
 
 func (uc UserController) UpdateProfile(ctx *gin.Context) {
-	id := ctx.Param("id")
-	userId, err := strconv.Atoi(id)
-	if err != nil {
-		ctx.JSON(400, models.Response{
-			Success: false,
-			Message: "Invalid user ID",
-		})
-		return
-	}
+	userId := middelware.GetUserFromToken(ctx)
 
 	userData := ctx.PostForm("data")
 	var input models.UpdateProfileRequest
