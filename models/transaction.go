@@ -4,8 +4,8 @@ import (
 	"time"
 )
 type TransactionItem struct {
-	ProductID   int     `json:"product_id" example:"1"`
-	ProductName string  `json:"product_name" example:"Latte"`
+	ProductID   int     `json:"productId" example:"1"`
+	ProductName string  `json:"productName" example:"Latte"`
 	Quantity    int     `json:"quantity" example:"2"`
 	Subtotal    float64 `json:"subtotal" example:"50000"`
 }
@@ -13,21 +13,21 @@ type TransactionItem struct {
 
 type Transaction struct {
 	ID            int               `json:"id"`
-	UserID        int               `json:"user_id"`
-	UserFullname  string            `json:"user_fullname" example:"Ari Eka Saputra"`
-	UserAddress   string            `json:"user_address" example:"Jl. Sudirman No. 10"`
-	UserPhone     string            `json:"user_phone" example:"08123456789"`
+	UserID        int               `json:"userId"`
+	UserFullname  string            `json:"userFullname" example:"Ari Eka Saputra"`
+	UserAddress   string            `json:"userAddress" example:"Jl. Sudirman No. 10"`
+	UserPhone     string            `json:"userPhone" example:"08123456789"`
 	Status        string            `json:"status" example:"pending"`
 	Total         float64           `json:"total" example:"100000"`
-	PaymentMethod string            `json:"payment_method" example:"Cash"`
-	DeliveryName  string            `json:"delivery_name" example:"Gojek"`
+	PaymentMethod string            `json:"paymentMethod" example:"Cash"`
+	DeliveryName  string            `json:"deliveryName" example:"Gojek"`
 	Items         []TransactionItem `json:"items"`
-	CreatedAt     time.Time         `json:"created_at"`
-	UpdatedAt     time.Time         `json:"updated_at"`
+	CreatedAt     time.Time         `json:"createdAt"`
+	UpdatedAt     time.Time         `json:"updatedAt"`
 }
 
 type InputNewStatus struct {
-	StatusTransactionID int `json:"status_transactions_id" binding:"required"`
+	StatusTransactionID int `json:"statusTransactionsId" binding:"required"`
 }
 
 type PaginationResponseTransaction struct {
@@ -35,18 +35,18 @@ type PaginationResponseTransaction struct {
 	Page       int                 `json:"page"`
 	Limit      int                 `json:"limit"`
 	Total      int                 `json:"total"`
-	TotalPages int                 `json:"total_pages"`
+	TotalPages int                 `json:"totalPages"`
 	Links      map[string]string   `json:"links"`
 }
 
 type TransactionInput struct {
-	DeliveryID          int    `json:"delivery_id" binding:"required"`
-	PaymentMethodID     int    `json:"payment_method_id" binding:"required"`
-	StatusTransactionID int    `json:"status_transactions_id" binding:"required"`
-	NameUser            string `json:"name_user"`
-	AddressUser         string `json:"address_user"`
-	PhoneUser           string `json:"phone_user"`
-	EmailUser           string `json:"email_user"`
+	DeliveryID          int    `json:"deliveryId" binding:"required"`
+	PaymentMethodID     int    `json:"paymentMethodId" binding:"required"`
+	StatusTransactionID int    `json:"statusTransactionsId" binding:"required"`
+	NameUser            string `json:"nameUser"`
+	AddressUser         string `json:"addressUser"`
+	PhoneUser           string `json:"phoneUser"`
+	EmailUser           string `json:"emailUser"`
 }
 
 type CartItems struct {
@@ -63,7 +63,7 @@ type CartItems struct {
 type TransactionResponse struct {
 	Invoice       string  `json:"invoice"`
 	Total         float64 `json:"total"`
-	PaymentStatus string  `json:"payment_status"`
+	PaymentStatus string  `json:"paymentStatus"`
 }
 
 

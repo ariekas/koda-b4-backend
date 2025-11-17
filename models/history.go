@@ -30,7 +30,7 @@ type HistoryItems struct{
 	Image string `json:"image"`
 	Name string `json:"name"`
 	Price float64 `json:"price"`
-	PriceDiscount float64 `json:"price discount"`
+	PriceDiscount float64 `json:"priceDiscount"`
 	Size string `json:"size"`
 	Variant string `json:"variant"`
 	Quantity int `json:"quantity"`
@@ -42,6 +42,6 @@ type PaginationResponseHistory struct {
 	Page       int                 `json:"page"`
 	Limit      int                 `json:"limit"`
 	Total      int                 `json:"total"`
-	TotalPages int                 `json:"total_pages"`
+	TotalPages int                 `json:"totalPages"`
 	Links      map[string]string   `json:"links"`
 }

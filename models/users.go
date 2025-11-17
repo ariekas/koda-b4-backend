@@ -11,12 +11,12 @@ type User struct {
 	Email      string     `json:"email"`
 	Password   string     `json:"-"`
 	Role       string     `json:"role"`
-	ProfileID  *int       `json:"profile_id,omitempty"`
+	ProfileID  *int       `json:"profileId,omitempty"`
 	Pic        *string    `json:"pic,omitempty"`
 	Phone      *string    `json:"phone,omitempty"`
 	Address    *string    `json:"address,omitempty"`
-	CreatedAt  *time.Time `json:"created_at,omitempty"`
-	UpdatedAt  *time.Time `json:"updated_at,omitempty"`
+	CreatedAt  *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt  *time.Time `json:"updatedAt,omitempty"`
 }
 var InputNewRole struct{
 	Role string `json:"role"`
