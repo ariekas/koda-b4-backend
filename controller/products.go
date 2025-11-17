@@ -20,6 +20,8 @@ type ProductController struct {
 	Pool *pgxpool.Pool
 }
 
+var Path = "/products*"
+
 // GetProducts godoc
 // @Summary Get all products
 // @Tags Products
@@ -102,15 +104,7 @@ func (pc ProductController) CreateProduct(ctx *gin.Context) {
 		return
 	}
 
-	redis := config.Redis()
-	iter := redis.Scan(context.Background(), 0 ,"/products*", 0).Iterator()
-	for iter.Next(context.Background()) {
-		redis.Del(context.Background(), iter.Val())
-	}
-	if err := iter.Err(); err != nil {
-		fmt.Println("Redis scan error:", err)
-	}
-
+	config.InvalidateRedis(path)
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Success Create product",
@@ -164,14 +158,7 @@ func (pc ProductController) EditProduct(ctx *gin.Context) {
 		return
 	}
 
-	redis := config.Redis()
-	iter := redis.Scan(context.Background(), 0 ,"/products*", 0).Iterator()
-	for iter.Next(context.Background()) {
-		redis.Del(context.Background(), iter.Val())
-	}
-	if err := iter.Err(); err != nil {
-		fmt.Println("Redis scan error:", err)
-	}
+	config.InvalidateRedis(path)
 
 	ctx.JSON(201, models.Response{
 		Success: true,
@@ -203,14 +190,7 @@ func (pc ProductController) DeleteProduct(ctx *gin.Context) {
 		return
 	}
 
-	redis := config.Redis()
-	iter := redis.Scan(context.Background(), 0 ,"/products*", 0).Iterator()
-	for iter.Next(context.Background()) {
-		redis.Del(context.Background(), iter.Val())
-	}
-	if err := iter.Err(); err != nil {
-		fmt.Println("Redis scan error:", err)
-	}
+	config.InvalidateRedis(path)
 
 	ctx.JSON(201, models.Response{
 		Success: true,
