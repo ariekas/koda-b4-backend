@@ -1,0 +1,9 @@
+services:
+  app:
+    build: .
+    container_name: justsruput_backend
+    ports:
+      - 8081:8080
+    env_file:
+      - .env
+    restart: unless-stopped
