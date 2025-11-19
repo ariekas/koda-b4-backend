@@ -38,15 +38,6 @@ func Register(ctx *gin.Context, pool *pgxpool.Pool) (models.User, error) {
 		return models.User{}, fmt.Errorf("failed to hash password")
 	}
 
-	err = pool.QueryRow(
-		context.Background(),
-		`SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)`,
-		input.Email,
-	).Scan(&checkEmail)
-
-	if err != nil {
-		return models.User{}, fmt.Errorf("error checking email")
-	}
 	if checkEmail {
 		return models.User{}, fmt.Errorf("email already registered")
 	}
