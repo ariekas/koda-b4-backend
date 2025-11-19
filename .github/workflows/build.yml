@@ -30,10 +30,10 @@ jobs:
 
       - name: Build Docker image
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/myproject:${GITHUB_REF#refs/tags/}
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/just-sruput:${GITHUB_REF#refs/tags/}
           docker build -t $IMAGE_NAME .
 
       - name: Push Docker image to GHCR
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/myproject:${GITHUB_REF#refs/tags/}
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/just-sruput:${GITHUB_REF#refs/tags/}
           docker push $IMAGE_NAME
