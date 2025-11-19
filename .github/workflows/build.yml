@@ -37,12 +37,11 @@ jobs:
         run: |
           IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/just-sruput:${GITHUB_REF#refs/tags/}
           docker push $IMAGE_NAME
-      - name: Pull Docker image on server
-        uses: appleboy/ssh-action@v0.1.7
+      - name: Execute remote SSH commands using SSH key
+        uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.SERVER_HOST }}       
-          username: ${{ secrets.SERVER_USER }}  
-          key: ${{ secrets.SERVER_SSH_KEY }}    
-          port: 22
-          script: |
-            docker pull ghcr.io/${{ github.repository_owner }}/just-sruput:${GITHUB_REF#refs/tags/}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          script: docker pull ghcr.io/ariekas/just-sruput:v1.0.5
