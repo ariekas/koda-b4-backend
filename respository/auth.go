@@ -54,7 +54,7 @@ func Register(ctx *gin.Context, pool *pgxpool.Pool) (models.User, error) {
 		input.Fullname, input.Email, hash, role, profileID, now, now,
 	)
 	if err != nil {
-		return models.User{}, fmt.Errorf("failed to insert user")
+		return models.User{}, fmt.Errorf("failed to insert user, %w", err)
 	}
 
 	user := models.User{
