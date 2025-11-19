@@ -12,9 +12,15 @@ import (
 
 func MainRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status":  "success",
+			"message": "Backend berjalan",
+		})
+	})
+
 	admin := r.Group("/admin")
 	admin.Use(middelware.VerifToken(), middelware.VerifRole("admin"))
-
 	{
 		routesAdmin.UsersRoutes(admin, pool)
 		routesAdmin.CategoryProductRoutes(admin, pool)
@@ -32,3 +38,4 @@ func MainRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 		routesUser.UserRoutes(user, pool)
 	}
 }
+

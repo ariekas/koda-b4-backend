@@ -46,5 +46,5 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
            cd ~/server && docker compose pull \
-           && docker compose up backedn -d \
+           && docker compose up app -d \
            && docker system prune -a --volumes
