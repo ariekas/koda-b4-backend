@@ -44,4 +44,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
           port: ${{ secrets.PORT }}
-          script: docker pull ghcr.io/ariekas/just-sruput:latest
+          script: |
+           cd ~/server && docker compose pull \
+           && docker compose up backedn -d \
+           && docker system prune -a --volumes
