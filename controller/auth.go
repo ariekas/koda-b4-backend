@@ -158,10 +158,18 @@ func (ac AuthController) ForgetPassword(ctx *gin.Context) {
 		Verified:  false,
 	}
 
+	err = respository.SendOtpEmail(Input.Email, otp)
+	if err != nil {
+		ctx.JSON(500, models.Response{
+			Success: false,
+			Message: "Failed to send OTP email: " + err.Error(),
+		})
+		return
+	}
+
 	ctx.JSON(200, models.Response{
 		Success: true,
 		Message: "OTP has been sent to your email",
-		Data:    otp,
 	})
 }
 

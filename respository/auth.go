@@ -4,6 +4,8 @@ import (
 	"back-end-coffeShop/models"
 	"context"
 	"fmt"
+	"net/smtp"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -132,4 +134,21 @@ func UpdatePassword(pool *pgxpool.Pool, email string, newPassword string) error 
 	}
 
 	return nil
+}
+
+func SendOtpEmail(toEmail, otp string) error{
+	from := os.Getenv("SMTP_EMAIL")
+	password := os.Getenv("SMTP_PASSWORD")
+
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+
+	subject := "Subject: OTP Reset Password\n"
+	body := fmt.Sprintf("Your OTP for resetting password is: %s\nIt will expire in 5 minutes.", otp)
+	message := []byte(subject + "\n" + body)
+
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{toEmail}, message)
+	return err
 }
