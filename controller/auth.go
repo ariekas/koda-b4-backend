@@ -105,15 +105,14 @@ func (ac AuthController) Login(ctx *gin.Context) {
 		fmt.Println("Error: Failed to generate token")
 	} 
 
-
-	loginResponse := models.LoginResponse{
-		Token: token,
-	}
 	
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Login success",
-		Data: loginResponse,
+		Data: gin.H{
+			"token": token,
+			"role":  users.Role,
+		},
 	})
 }
 

@@ -37,9 +37,6 @@ type LoginRequest struct {
 	Password string `json:"password" example:"123456" binding:"required,min=6"`
 }
 
-type LoginResponse struct {
-	Token string `json:"token"`
-}
 
 var OtpForget = map[string]struct{
     Code       string
