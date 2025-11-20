@@ -47,7 +47,7 @@ func (pc ProductController) GetProducts(ctx *gin.Context) {
 	var response models.PaginationResponse
 
 	if cache == "" {
-		response, err := respository.GetProducts(pc.Pool, page)
+		response, err = respository.GetProducts(pc.Pool, page)
 		if err != nil {
 			ctx.JSON(500, models.Response{
 				Success: false,
