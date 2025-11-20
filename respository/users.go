@@ -1,6 +1,7 @@
 package respository
 
 import (
+	"back-end-coffeShop/lib/config"
 	"back-end-coffeShop/models"
 	"context"
 	"fmt"
@@ -175,20 +176,34 @@ func UpdateProfile(pool *pgxpool.Pool, userId int, input models.UpdateProfileReq
 			return fmt.Errorf("unsupported image format (only jpg, jpeg, png)")
 		}
 
+		useCloud := os.Getenv("CLOUDINARY_API_KEY") != "" &&
+			os.Getenv("CLOUDINARY_API_SECRET") != "" &&
+			os.Getenv("CLOUDINARY_NAME") != ""
+
 		newName := fmt.Sprintf("profile_%d_%d%s", userId, time.Now().Unix(), ext)
-		savePath := "uploads/profile/" + newName
 
-		if err := os.MkdirAll("uploads/profile", os.ModePerm); err != nil {
-			return fmt.Errorf("failed to create upload folder: %v", err)
+		if useCloud {
+			uploadedURL, err := config.UploaderFile(input.PicFile, "pic", newName)
+			if err != nil {
+				return fmt.Errorf("failed upload cloudinary: %v", err)
+			}
+
+			fileName = &uploadedURL
+
+		} else {
+			savePath := "uploads/profile/" + newName
+
+			if err := os.MkdirAll("uploads/profile", os.ModePerm); err != nil {
+				return fmt.Errorf("failed to create folder: %v", err)
+			}
+
+			if err := SaveUploadedFile(input.PicFile, savePath); err != nil {
+				return fmt.Errorf("failed to save local file: %v", err)
+			}
+
+			fileName = &newName
 		}
-
-		if err := SaveUploadedFile(input.PicFile, savePath); err != nil {
-			return fmt.Errorf("failed to save file: %v", err)
-		}
-
-		fileName = &newName
 	}
-
 	_, err = tx.Exec(ctx, `
 		UPDATE profile
 		SET 
@@ -209,6 +224,7 @@ func UpdateProfile(pool *pgxpool.Pool, userId int, input models.UpdateProfileReq
 
 	return nil
 }
+
 
 func GetUserByToken(pool *pgxpool.Pool, userId int) (models.User, error) {
 	var user models.User

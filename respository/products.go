@@ -353,7 +353,7 @@ func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, fil
 		var finalURL string
 
 		if useCloud {
-			imageURL, err := config.UploaderFile(file, fileName)
+			imageURL, err := config.UploaderFile(file,"imageProducts", fileName)
 			if err != nil {
 				return nil, fmt.Errorf("cloud upload failed: %v", err)
 			}

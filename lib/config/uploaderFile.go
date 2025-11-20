@@ -8,7 +8,7 @@ import (
 	"github.com/cloudinary/cloudinary-go/api/uploader"
 )
 
-func UploaderFile(file *multipart.FileHeader, filePath string) (string, error) {
+func UploaderFile(file *multipart.FileHeader, folder string, fileName string) (string, error) {
 	cld, err := ConfigCloudinary()
 	if err != nil {
 		return "", fmt.Errorf("cloudinary connection failed: %w", err)
@@ -21,8 +21,8 @@ func UploaderFile(file *multipart.FileHeader, filePath string) (string, error) {
 	defer src.Close()
 
 	params := uploader.UploadParams{
-		PublicID: filePath,
-		Folder:   "imageproducts",
+		PublicID: fileName, 
+		Folder:   folder,  
 	}
 
 	result, err := cld.Upload.Upload(context.Background(), src, params)
