@@ -11,7 +11,7 @@ func CrossMiddelware() gin.HandlerFunc {
 	url := config.ReadEnvUrl()
 	config := cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", url}, 
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE","PATCH", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 	}
 
