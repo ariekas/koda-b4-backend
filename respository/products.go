@@ -42,7 +42,7 @@ func GetProducts(pool *pgxpool.Pool, page int) (models.PaginationResponse, error
 	    p.category_products_id,
 	    COALESCE(
 	        JSON_AGG(
-	            JSON_BUILD_OBJECT('id', ip.id, 'url', ip.image)
+                JSON_BUILD_OBJECT('id', ip.id, 'image', ip.image)
 	        ) FILTER (WHERE ip.id IS NOT NULL), '[]'
 	    ) AS images,
 	    p.created_at, 
@@ -50,7 +50,6 @@ func GetProducts(pool *pgxpool.Pool, page int) (models.PaginationResponse, error
 	FROM products p
 	LEFT JOIN product_images ip ON ip.products_id = p.id
 	GROUP BY p.id
-	ORDER BY p.id
 	OFFSET $1 LIMIT $2
 	`, offset, limit)
 	if err != nil {
