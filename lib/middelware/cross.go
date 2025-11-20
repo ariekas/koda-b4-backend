@@ -3,12 +3,17 @@ package middelware
 import (
 	"back-end-coffeShop/lib/config"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func CrossMiddelware(ctx *gin.Context) {
+func CrossMiddelware() gin.HandlerFunc {
 	url := config.ReadEnvUrl()
-	ctx.Header("Access-Control-Allow-Origin", url)
-	ctx.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	ctx.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	config := cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173", url}, 
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+	}
+
+	return cors.New(config)
 }

@@ -29,7 +29,7 @@ func main() {
 	r := gin.Default()
 
 	r.MaxMultipartMemory = 8 << 20
-	r.Use(middelware.CrossMiddelware)
+	r.Use(middelware.CrossMiddelware())
 	r.Use(middelware.AllowPreflight)
 	
 	routes.MainRoutes(r, connectDb)
