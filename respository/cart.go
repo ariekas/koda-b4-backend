@@ -144,3 +144,20 @@ fmt.Println(err)
 
 return err
 }
+
+func CountCart(pool *pgxpool.Pool, userId int) (int, error) {
+    ctx := context.Background()
+    var count int
+
+    err := pool.QueryRow(ctx, `
+        SELECT COALESCE(SUM(quantity), 0)
+        FROM carts
+        WHERE users_id = $1
+    `, userId).Scan(&count)
+
+    if err != nil {
+        return 0, fmt.Errorf("failed to count cart: %v", err)
+    }
+
+    return count, nil
+}

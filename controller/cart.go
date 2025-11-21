@@ -109,3 +109,29 @@ func (cc CartController) DeleteCart(ctx *gin.Context){
 		Message: "Success deleting cart",
 	})
 }
+
+func (cc CartController) CountCart(ctx *gin.Context) {
+    userID := middelware.GetUserFromToken(ctx)
+    if userID == 0 {
+        ctx.JSON(http.StatusUnauthorized, models.Response{
+            Success: false,
+            Message: "Unauthorized: Invalid or missing token",
+        })
+        return
+    }
+
+    count, err := respository.CountCart(cc.Pool, userID)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, models.Response{
+            Success: false,
+            Message: "Failed to fetch cart count",
+        })
+        return
+    }
+
+    ctx.JSON(http.StatusOK, models.Response{
+        Success: true,
+        Message: "Cart count fetched successfully",
+        Data: gin.H{"count": count},
+    })
+}
