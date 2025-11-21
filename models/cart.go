@@ -16,14 +16,26 @@ type Cart struct {
 }
 
 type CartItem struct {
-	ID           int     `json:"id"`
-	ProductID    int     `json:"productId"`
-	ProductName  string  `json:"productName"`
-	SizeID       int     `json:"sizeId,omitempty"`
-	SizeName     string  `json:"sizeName,omitempty"`
-	VariantID    int     `json:"variantId,omitempty"`
-	VariantName  string  `json:"variantName,omitempty"`
-	Quantity     int     `json:"quantity"`
-	Subtotal     float64 `json:"subtotal"`      
-	ImageURL     string  `json:"imageUrl,omitempty"`
+	ID                  int     `json:"id"`
+	ProductID           int     `json:"productId"`
+	ProductName         string  `json:"productName"`
+
+	SizeID              int     `json:"sizeId"`
+	SizeName            string  `json:"sizeName"`
+	SizeAdditionalCost  float64 `json:"sizeAdditionalCost"`
+
+	VariantID           int     `json:"variantId"`
+	VariantName         string  `json:"variantName"`
+	VariantAdditionalCost float64 `json:"variantAdditionalCost"`
+
+	IsFlashSale         bool    `json:"isFlashSale"`
+	Price               float64 `json:"price"`
+	PriceDiscounts      float64 `json:"priceDiscounts"`
+
+	Quantity            int     `json:"quantity"`
+
+	Subtotal            float64 `json:"subtotal"`
+	OrderTotal          float64 `json:"orderTotal"`
+
+	ImageURL            string  `json:"imageUrl"`
 }
