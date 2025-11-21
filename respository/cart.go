@@ -65,80 +65,75 @@ func AddToCart(pool *pgxpool.Pool, userId int, productId int, sizeId int, varian
 }
 
 
-func GetUserCartProduct(pool *pgxpool.Pool, userId int) ([]models.CartItem, error) {
+func GetUserCart(pool *pgxpool.Pool, userId int) (*models.Cart, error) {
 	ctx := context.Background()
 	var items []models.CartItem
 
 	rows, err := pool.Query(ctx, `
-	  SELECT 
-    c.id,
-    p.id AS product_id,
-    p.name AS product_name,
-    
-    COALESCE(sp.id, 0) AS size_id,
-    COALESCE(sp.name, '') AS size_name,
-    COALESCE(sp.additional_costs, 0) AS size_additional_cost,
-    
-    COALESCE(vp.id, 0) AS variant_id,
-    COALESCE(vp.name, '') AS variant_name,
-    COALESCE(vp.additional_costs, 0) AS variant_additional_cost,
+	SELECT 
+		c.id,
+		p.id AS product_id,
+		p.name AS product_name,
 
-    p.is_flashsale,
-    p.price,
-    p.price_discounts,
+		COALESCE(sp.id, 0) AS size_id,
+		COALESCE(sp.name, '') AS size_name,
+		COALESCE(sp.additional_costs, 0) AS size_cost,
 
-    c.quantity,
+		COALESCE(vp.id, 0) AS variant_id,
+		COALESCE(vp.name, '') AS variant_name,
+		COALESCE(vp.additional_costs, 0) AS variant_cost,
 
-    (
-        (CASE 
-            WHEN p.price_discounts > 0 THEN p.price_discounts
-            ELSE p.price
-         END)
-         + COALESCE(sp.additional_costs, 0)
-         + COALESCE(vp.additional_costs, 0)
-    ) * c.quantity AS subtotal,
+		p.is_flashsale,
+		p.price,
+		p.price_discounts,
 
-    (CASE 
-    WHEN p.price_discounts > 0 THEN p.price_discounts
-    ELSE p.price
- END) * c.quantity AS order_total,
+		c.quantity,
 
+		-- harga final
+		(CASE 
+			WHEN p.price_discounts > 0 THEN p.price_discounts
+			ELSE p.price
+		END) 
+		+ COALESCE(sp.additional_costs, 0)
+		+ COALESCE(vp.additional_costs, 0) AS final_price,
 
-    COALESCE(pi.image, '') AS image_url
+		-- total per item
+		(
+			(CASE 
+				WHEN p.price_discounts > 0 THEN p.price_discounts
+				ELSE p.price
+			END)
+			+ COALESCE(sp.additional_costs, 0)
+			+ COALESCE(vp.additional_costs, 0)
+		) * c.quantity AS order_total,
 
-FROM carts c
-JOIN products p ON c.products_id = p.id
-LEFT JOIN size_products sp ON c.size_products_id = sp.id
-LEFT JOIN variant_products vp ON c.variant_products_id = vp.id
-LEFT JOIN LATERAL (
-    SELECT image
-    FROM product_images
-    WHERE products_id = p.id
-    ORDER BY id ASC
-    LIMIT 1
-) pi ON TRUE
-WHERE c.users_id = $1
+		COALESCE(pi.image, '') AS image_url
 
-GROUP BY 
-    c.id,
-    p.id,
-    p.name,
-    sp.id,
-    sp.name,
-    sp.additional_costs,
-    vp.id,
-    vp.name,
-    vp.additional_costs,
-    p.is_flashsale,
-    p.price,
-    p.price_discounts,
-    c.quantity,
-    pi.image
-`, userId)
+	FROM carts c
+	JOIN products p ON c.products_id = p.id
+	LEFT JOIN size_products sp ON c.size_products_id = sp.id
+	LEFT JOIN variant_products vp ON c.variant_products_id = vp.id
+	LEFT JOIN LATERAL (
+		SELECT image
+		FROM product_images
+		WHERE products_id = p.id
+		ORDER BY id ASC
+		LIMIT 1
+	) pi ON TRUE
+	WHERE c.users_id = $1
 
+	GROUP BY 
+		c.id, p.id, p.name,
+		sp.id, sp.name, sp.additional_costs,
+		vp.id, vp.name, vp.additional_costs,
+		p.is_flashsale,
+		p.price, p.price_discounts,
+		c.quantity,
+		pi.image
+	`, userId)
 
 	if err != nil {
-		fmt.Println("failed to query cart items", err)
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -149,52 +144,47 @@ GROUP BY
 			&item.ID,
 			&item.ProductID,
 			&item.ProductName,
-
 			&item.SizeID,
 			&item.SizeName,
-			&item.SizeAdditionalCost,
-
 			&item.VariantID,
 			&item.VariantName,
-			&item.VariantAdditionalCost,
-
+			&item.Quantity,
 			&item.IsFlashSale,
 			&item.Price,
-			&item.PriceDiscounts,
-
-			&item.Quantity,
-
-			&item.Subtotal,
+			&item.DiscountPrice,
+			&item.FinalPrice,
 			&item.OrderTotal,
-
 			&item.ImageURL,
 		)
 
 		if err != nil {
-			fmt.Println("failed to scan cart item:", err)
+			fmt.Println("scan error:", err)
 			continue
 		}
 
 		items = append(items, item)
 	}
-	
-	if rows.Err() != nil {
-		fmt.Println("error iterating rows:", rows.Err())
+
+	delivery := 5000.0
+	tax := 5000.0
+
+	var totalOrder float64
+	for _, it := range items {
+		totalOrder += it.OrderTotal
 	}
 
-	return items, nil
+	cart := &models.Cart{
+		UserID:       userId,
+		Items:        items,
+		OrderTotal:   totalOrder,
+		DeliveryCost: delivery,
+		Tax:          tax,
+		Subtotal:     totalOrder + delivery + tax,
+	}
+
+	return cart, nil
 }
 
-func DeleteCart(pool *pgxpool.Pool, userId int, cartId int) error {
-	_, err := pool.Exec(context.Background(), `
-	DELETE FROM carts
-	WHERE id = $1 AND users_id = $2
-`, cartId, userId)
-
-fmt.Println(err)
-
-return err
-}
 
 func CountCart(pool *pgxpool.Pool, userId int) (int, error) {
     ctx := context.Background()

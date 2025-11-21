@@ -60,7 +60,7 @@ func (cc CartController) GetCart(ctx *gin.Context) {
 		return
 	}
 
-	cartItems, err := respository.GetUserCartProduct(cc.Pool, userID)
+	cartItems, err := respository.GetUserCart(cc.Pool, userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.Response{
 			Success: false,
