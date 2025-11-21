@@ -185,6 +185,16 @@ func GetUserCart(pool *pgxpool.Pool, userId int) (*models.Cart, error) {
 	return cart, nil
 }
 
+func DeleteCart(pool *pgxpool.Pool, userId int, cartId int) error {
+	_, err := pool.Exec(context.Background(), `
+	DELETE FROM carts
+	WHERE id = $1 AND users_id = $2
+`, cartId, userId)
+
+fmt.Println(err)
+
+return err
+}
 
 func CountCart(pool *pgxpool.Pool, userId int) (int, error) {
     ctx := context.Background()
