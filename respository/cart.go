@@ -150,7 +150,7 @@ func CountCart(pool *pgxpool.Pool, userId int) (int, error) {
     var count int
 
     err := pool.QueryRow(ctx, `
-        SELECT COALESCE(SUM(quantity), 0)
+        SELECT COUNT(carts)
         FROM carts
         WHERE users_id = $1
     `, userId).Scan(&count)
