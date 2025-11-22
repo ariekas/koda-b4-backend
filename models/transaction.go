@@ -59,6 +59,13 @@ type CartItems struct {
 	SizeCost         float64
 }
 
+type PaymentMethod struct {
+	Id int `json:"id"`
+	Name string `json:"name"`
+	ImagePayment *string `json:"imagePayment"`
+	CreatedAt     time.Time         `json:"createdAt"`
+	UpdatedAt     time.Time         `json:"updatedAt"`
+}
 
 type TransactionResponse struct {
 	Invoice       string  `json:"invoice"`

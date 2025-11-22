@@ -177,9 +177,6 @@ func GetTransactionById(pool *pgxpool.Pool, transactionId int) (models.Transacti
 	return t, nil
 }
 
-
-
-
 func UpdateTransactionStatus(pool *pgxpool.Pool, transactionId int, newStatusID int) error {
 
     cmdTag, err := pool.Exec(context.Background(),
@@ -374,4 +371,35 @@ func GetProfileByUser(pool *pgxpool.Pool, userID int) (models.ProfileData, error
 	`, userID).Scan(&data.Fullname, &data.Email, &data.Address, &data.Phone)
 
 	return data, err
+}
+
+func GetPaymentMethod(pool *pgxpool.Pool) ([]models.PaymentMethod, error) {
+	rows, err := pool.Query(context.Background(), `
+		SELECT id, name, image_payment, created_at, updated_at
+		FROM payment_methods
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch payment methods: %w", err)
+	}
+	defer rows.Close()
+
+	var payments []models.PaymentMethod
+
+	for rows.Next() {
+		var pm models.PaymentMethod
+		err := rows.Scan(
+			&pm.Id,
+			&pm.Name,
+			&pm.ImagePayment,
+			&pm.CreatedAt,
+			&pm.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan payment method: %w", err)
+		}
+
+		payments = append(payments, pm)
+	}
+
+	return payments, nil
 }
