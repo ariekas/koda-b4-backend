@@ -40,7 +40,7 @@ func (cpc CategoryProductController) GetAll(ctx *gin.Context) {
 	var response models.PaginationResponse
 
 	if cache == "" {
-		response, err := respository.GetCategories(cpc.Pool, page)
+		response, err = respository.GetCategories(cpc.Pool, page)
 
 		if err != nil {
 			ctx.JSON(401, models.Response{
