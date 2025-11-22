@@ -42,7 +42,7 @@ type PaginationResponseTransaction struct {
 type TransactionInput struct {
 	DeliveryID          int    `json:"deliveryId" binding:"required"`
 	PaymentMethodID     int    `json:"paymentMethodId" binding:"required"`
-	StatusTransactionID int    `json:"statusTransactionsId" binding:"required"`
+	StatusTransactionID int    `json:"statusTransactionsId"`
 	NameUser            string `json:"nameUser"`
 	AddressUser         string `json:"addressUser"`
 	PhoneUser           string `json:"phoneUser"`

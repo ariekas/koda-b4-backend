@@ -267,6 +267,11 @@ func CreateTransaction(pool *pgxpool.Pool, userID int, input models.TransactionI
 		return 0, fmt.Errorf("data user tidak lengkap")
 	}
 
+	statusID := input.StatusTransactionID
+if statusID == 0 {
+	statusID = 1 
+}
+
 	err = tx.QueryRow(ctx, `
 		INSERT INTO transactions (
 			users_id, 
@@ -286,7 +291,7 @@ func CreateTransaction(pool *pgxpool.Pool, userID int, input models.TransactionI
 		userID,
 		input.DeliveryID,
 		input.PaymentMethodID,
-		input.StatusTransactionID,
+		statusID,
 		nameUser,
 		addressUser,
 		phoneUser,
