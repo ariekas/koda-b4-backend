@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -522,29 +523,30 @@ func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy string, priceM
 
 	query := `
 	SELECT 
-    p.id,
-    p.name,
-    p.price,
-    p.description,
-    p.stock,
-    p.is_flashsale,
-    p.is_favorite_product,
-    p.category_products_id,
-    COALESCE((
-        SELECT pi.image 
-        FROM product_images pi 
-        WHERE pi.products_id = p.id 
-        ORDER BY pi.id ASC 
-        LIMIT 1
-    ), '') AS image,
-    p.created_at,
-    p.updated_at
+		p.id,
+		p.name,
+		p.price,
+		p.description,
+		p.stock,
+		p.is_flashsale,
+		p.is_favorite_product,
+		p.category_products_id,
+		COALESCE((
+			SELECT pi.image 
+			FROM product_images pi 
+			WHERE pi.products_id = p.id 
+			ORDER BY pi.id ASC 
+			LIMIT 1
+		), '') AS image,
+		p.created_at,
+		p.updated_at
 	FROM products p
-	LEFT JOIN product_images ip ON ip.products_id=p.id
 	WHERE 1=1
 	`
+
 	args := []interface{}{}
 	argIdx := 1
+
 	if name != "" {
 		query += fmt.Sprintf(" AND LOWER(p.name) LIKE LOWER($%d)", argIdx)
 		args = append(args, "%"+name+"%")
@@ -552,10 +554,19 @@ func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy string, priceM
 	}
 
 	if categoryStr != "" {
-		categories := strings.Split(categoryStr, ",")
-		query += fmt.Sprintf(" AND p.category_products_id = ANY($%d)", argIdx)
-		args = append(args, categories)
-		argIdx++
+		split := strings.Split(categoryStr, ",")
+		categories := make([]int, 0)
+		for _, c := range split {
+			if v, err := strconv.Atoi(c); err == nil {
+				categories = append(categories, v)
+			}
+		}
+
+		if len(categories) > 0 {
+			query += fmt.Sprintf(" AND p.category_products_id = ANY($%d)", argIdx)
+			args = append(args, categories)
+			argIdx++
+		}
 	}
 
 	if priceMin > 0 {
@@ -563,6 +574,7 @@ func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy string, priceM
 		args = append(args, priceMin)
 		argIdx++
 	}
+
 	if priceMax > 0 {
 		query += fmt.Sprintf(" AND p.price <= $%d", argIdx)
 		args = append(args, priceMax)
@@ -590,6 +602,7 @@ func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy string, priceM
 	defer rows.Close()
 
 	var products []models.Product
+
 	for rows.Next() {
 		var p models.Product
 		var image string
@@ -608,14 +621,15 @@ func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy string, priceM
 			&p.UpdatedAt,
 		)
 
-		p.Images = []models.ImageProduct{
-			{Image: image},
-		}
-		
 		if err != nil {
 			fmt.Println("Error scanning product:", err)
 			continue
 		}
+
+		p.Images = []models.ImageProduct{
+			{Image: image},
+		}
+
 		products = append(products, p)
 	}
 
@@ -628,17 +642,29 @@ func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy string, priceM
 		countArgs = append(countArgs, "%"+name+"%")
 		argIdx++
 	}
+
 	if categoryStr != "" {
-		categories := strings.Split(categoryStr, ",")
-		countQuery += fmt.Sprintf(" AND p.category_products_id = ANY($%d)", argIdx)
-		countArgs = append(countArgs, categories)
-		argIdx++
+		split := strings.Split(categoryStr, ",")
+		categories := make([]int, 0)
+		for _, c := range split {
+			if v, err := strconv.Atoi(c); err == nil {
+				categories = append(categories, v)
+			}
+		}
+
+		if len(categories) > 0 {
+			countQuery += fmt.Sprintf(" AND p.category_products_id = ANY($%d)", argIdx)
+			countArgs = append(countArgs, categories)
+			argIdx++
+		}
 	}
+
 	if priceMin > 0 {
 		countQuery += fmt.Sprintf(" AND p.price >= $%d", argIdx)
 		countArgs = append(countArgs, priceMin)
 		argIdx++
 	}
+
 	if priceMax > 0 {
 		countQuery += fmt.Sprintf(" AND p.price <= $%d", argIdx)
 		countArgs = append(countArgs, priceMax)
@@ -648,7 +674,7 @@ func FilterProducts(pool *pgxpool.Pool, name, categoryStr, sortBy string, priceM
 	var total int
 	err = pool.QueryRow(context.Background(), countQuery, countArgs...).Scan(&total)
 	if err != nil {
-		fmt.Println("Error counting filtered products:", err)
+		fmt.Println("Error counting products:", err)
 	}
 
 	return products, total, nil

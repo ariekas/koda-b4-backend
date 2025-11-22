@@ -310,13 +310,24 @@ func (pc ProductController) GetFavoriteProducts(ctx *gin.Context) {
 func (pc ProductController) Filter(ctx *gin.Context) {
 	name := ctx.Query("name")
 	categoryStr := ctx.Query("category")
-	sortBy := ctx.Query("sort_by")
-	priceMin, _ := strconv.ParseFloat(ctx.Query("price_min"), 64)
-	priceMax, _ := strconv.ParseFloat(ctx.Query("price_max"), 64)
+
+	sortBy := ctx.Query("sortBy")
+	priceMin, _ := strconv.ParseFloat(ctx.Query("priceMin"), 64)
+	priceMax, _ := strconv.ParseFloat(ctx.Query("priceMax"), 64)
+
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "20"))
 
-	data, total, err := respository.FilterProducts(pc.Pool, name, categoryStr, sortBy, priceMin, priceMax, page, limit)
+	data, total, err := respository.FilterProducts(
+		pc.Pool,
+		name,
+		categoryStr,
+		sortBy,
+		priceMin,
+		priceMax,
+		page,
+		limit,
+	)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.Response{
 			Success: false,
@@ -326,7 +337,12 @@ func (pc ProductController) Filter(ctx *gin.Context) {
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
-	baseURL := fmt.Sprintf("/products/filter?name=%s&category=%s&sort_by=%s&price_min=%v&price_max=%v&limit=%d",
+	if totalPages < 1 {
+		totalPages = 1
+	}
+
+	baseURL := fmt.Sprintf(
+		"/products/filter?name=%s&category=%s&sortBy=%s&priceMin=%v&priceMax=%v&limit=%d",
 		name, categoryStr, sortBy, priceMin, priceMax, limit,
 	)
 
@@ -356,6 +372,7 @@ func (pc ProductController) Filter(ctx *gin.Context) {
 		},
 	})
 }
+
 
 func (pc ProductController) DetailProduct(ctx *gin.Context){
 	id := ctx.Param("id")
