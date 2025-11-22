@@ -13,8 +13,10 @@ func UserRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
 	transactionsControlelr :=  controller.TransactionsController{Pool: pool}
 	usersController := controller.UserController{Pool: pool}
 	historyController := controller.HistoryController{Pool: pool}
+	categoryProductController := controller.CategoryProductController{Pool: pool}
 
 	r.GET("/products", productController.GetProducts)
+	r.GET("/categories", categoryProductController.GetAll)
 	r.GET("/products/favorite", productController.GetFavoriteProducts)
 	r.GET("/products/filter", productController.Filter)
 	r.GET("/product/:id", productController.DetailProduct)
