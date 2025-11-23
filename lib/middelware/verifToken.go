@@ -9,24 +9,29 @@ import (
 )
 
 func VerifToken() gin.HandlerFunc {
-	jwtToken := config.ReadENV()
+    jwtToken := config.ReadENV()
 
-	return func(ctx *gin.Context)  {
-		authHeader := ctx.Request.Header.Get("Authorization")
+    return func(ctx *gin.Context) {
+        authHeader := ctx.GetHeader("Authorization")
 
-		tokenString,_ := strings.CutPrefix(authHeader, "Bearer ")
-		
-		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (any, error) {
-			return []byte(jwtToken), nil
-		})
+        if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+            ctx.JSON(401, gin.H{"message": "Authorization header required"})
+            ctx.Abort()
+            return
+        }
 
-		if err != nil || !token.Valid {
-			ctx.JSON(401, gin.H{"message": "Invalid token"})
-			ctx.Abort()
-			return
-		}
+        tokenString := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 
-		ctx.Next()	
+        token, err := jwt.Parse(tokenString, func(t *jwt.Token) (any, error) {
+            return []byte(jwtToken), nil
+        })
 
-	}
+        if err != nil || !token.Valid {
+            ctx.JSON(401, gin.H{"message": "Invalid token"})
+            ctx.Abort()
+            return
+        }
+
+        ctx.Next()
+    }
 }

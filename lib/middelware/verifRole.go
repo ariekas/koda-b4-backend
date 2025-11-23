@@ -2,7 +2,6 @@ package middelware
 
 import (
 	"back-end-coffeShop/lib/config"
-	"back-end-coffeShop/models"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -10,44 +9,50 @@ import (
 )
 
 func VerifRole(roles ...string) gin.HandlerFunc {
-	jwtToken := config.ReadENV()
+    jwtToken := config.ReadENV()
 
-	return func(ctx *gin.Context)  {
-		authHeader := ctx.Request.Header.Get("Authorization")
+    return func(ctx *gin.Context) {
+        authHeader := ctx.GetHeader("Authorization")
 
-		tokenString,_ := strings.CutPrefix(authHeader, "Bearer ")
-		
-		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (any, error) {
-			return []byte(jwtToken), nil
-		})
+        if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+            ctx.JSON(401, gin.H{"message": "Authorization header required"})
+            ctx.Abort()
+            return
+        }
 
-		if err != nil || !token.Valid {
-			ctx.JSON(401, gin.H{"message": "Invalid token"})
-			ctx.Abort()
-			return
-		}
+        tokenString := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 
-		claims,_ := token.Claims.(jwt.MapClaims)
+        token, err := jwt.Parse(tokenString, func(t *jwt.Token) (any, error) {
+            return []byte(jwtToken), nil
+        })
 
-		userRole,_ := claims["role"].(string)
+        if err != nil || !token.Valid {
+            ctx.JSON(401, gin.H{"message": "Invalid token"})
+            ctx.Abort()
+            return
+        }
 
-		allowed := false
+        claims, _ := token.Claims.(jwt.MapClaims)
+        userRole := claims["role"].(string)
 
-		for _, role := range roles {
-			if userRole == role {
-				allowed = true
-				break
-			}
-		}
+        allowed := false
+        for _, role := range roles {
+            if userRole == role {
+                allowed = true
+                break
+            }
+        }
 
-		if !allowed {
-			ctx.JSON(400, models.Response{
-				Success: false,
-				Message: "Error: Access role Denied",
-			})
-			ctx.Abort()
-			return 
-		}
-		ctx.Next()	
-	}
+        if !allowed {
+            ctx.JSON(403, gin.H{
+                "success": false,
+                "message": "Access role denied",
+            })
+            ctx.Abort()
+            return
+        }
+
+        ctx.Next()
+    }
 }
+
