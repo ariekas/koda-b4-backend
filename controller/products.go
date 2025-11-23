@@ -185,7 +185,7 @@ func (pc ProductController) DeleteProduct(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(404, models.Response{
 			Success: false,
-			Message: "Error: Failed to get product",
+			Message: err.Error(),
 		})
 		return
 	}

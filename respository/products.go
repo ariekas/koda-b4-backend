@@ -307,9 +307,21 @@ func EditProduct(pool *pgxpool.Pool, id int, input models.Product) (models.Produ
 }
 
 func DeleteProduct(pool *pgxpool.Pool, id int) error {
-	_, err := pool.Exec(context.Background(), "DELETE FROM products WHERE id=$1", id)
-	return err
+    _, err := pool.Exec(context.Background(),
+        "DELETE FROM product_images WHERE products_id=$1", id)
+    if err != nil {
+        return fmt.Errorf("failed to delete images: %w", err)
+    }
+
+    _, err = pool.Exec(context.Background(),
+        "DELETE FROM products WHERE id=$1", id)
+    if err != nil {
+        return fmt.Errorf("failed to delete product: %w", err)
+    }
+
+    return nil
 }
+
 
 func CreateImageProduct(pool *pgxpool.Pool, ctx *gin.Context, productId int, files []*multipart.FileHeader) ([]models.ImageProduct, error) {
 	var images []models.ImageProduct
