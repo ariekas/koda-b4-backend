@@ -113,7 +113,7 @@ func GetProducts(pool *pgxpool.Pool, page int) (models.PaginationResponse, error
 }
 
 
-func CreateProduct(pool *pgxpool.Pool, input models.Product) error {
+func CreateProduct(pool *pgxpool.Pool, input models.Product) (*models.Product, error) {
 	now := time.Now()
 	priceDiscount := 0.0 
 
@@ -124,13 +124,14 @@ func CreateProduct(pool *pgxpool.Pool, input models.Product) error {
 			input.DiscountsId,
 		).Scan(&discount)
 		if err != nil {
-			return fmt.Errorf("failed to get discount: %w", err)
+			return nil, fmt.Errorf("failed to get discount: %w", err)
 		}
 
 		priceDiscount = input.Price - (input.Price * (discount / 100))
 	}
 
-	_, err := pool.Exec(context.Background(), `
+	var newID int
+	err := pool.QueryRow(context.Background(), `
 		INSERT INTO products (
 			discounts_id,
 			name,
@@ -145,6 +146,7 @@ func CreateProduct(pool *pgxpool.Pool, input models.Product) error {
 			updated_at
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		RETURNING id
 	`,
 		input.DiscountsId,
 		input.Name,
@@ -157,13 +159,18 @@ func CreateProduct(pool *pgxpool.Pool, input models.Product) error {
 		input.CategoryProductId,
 		now,
 		now,
-	)
+	).Scan(&newID)
 
 	if err != nil {
-		return fmt.Errorf("failed to create product: %w", err)
+		return nil, fmt.Errorf("failed to create product: %w", err)
 	}
 
-	return nil
+	input.Id = newID
+	input.PriceDiscount = priceDiscount
+	input.CreatedAt = now
+	input.UpdatedAt = now
+
+	return &input, nil
 }
 
 func GetProductByID(pool *pgxpool.Pool, id int) (models.Product, error) {
