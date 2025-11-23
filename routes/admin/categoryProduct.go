@@ -12,9 +12,9 @@ func CategoryProductRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
 
 	category := r.Group("/categorys")
 	{
-		category.GET("/",  categoryProductController.GetAll)
+		category.GET("",  categoryProductController.GetAll)
 		category.GET("/:id",  categoryProductController.GetByID)
-		category.POST("/",  categoryProductController.Create)
+		category.POST("",  categoryProductController.Create)
 		category.PATCH("/:id",  categoryProductController.Edit)
 		category.DELETE("/:id",  categoryProductController.Delete)
 	}

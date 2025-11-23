@@ -12,7 +12,7 @@ func TransactionRoutes(r *gin.RouterGroup, pool *pgxpool.Pool){
 
 	transaction := r.Group("/transaction")
 	{
-		transaction.GET("/",  TransactionsController.GetTransactions)
+		transaction.GET("",  TransactionsController.GetTransactions)
 		transaction.GET("/:id",  TransactionsController.GetTransactionById)
 		transaction.PATCH("/status/:id", TransactionsController.UpdateTransactionStatus)
 	}

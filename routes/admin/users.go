@@ -11,7 +11,7 @@ func UsersRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 	userController := controller.UserController{Pool: pool}
 	users := r.Group("/users")
 	{
-		users.GET("/", userController.GetUsers)
+		users.GET("", userController.GetUsers)
 		users.DELETE("/:id", userController.DeleteUser)
 		users.PATCH("/role/:id", userController.UpdateRole)
 	}
