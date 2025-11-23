@@ -95,7 +95,7 @@ func (pc ProductController) CreateProduct(ctx *gin.Context) {
 		return
 	}
 
-	err := respository.CreateProduct(pc.Pool, input)
+	createdProduct, err := respository.CreateProduct(pc.Pool, input)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, models.Response{
 			Success: false,
@@ -108,7 +108,7 @@ func (pc ProductController) CreateProduct(ctx *gin.Context) {
 	ctx.JSON(201, models.Response{
 		Success: true,
 		Message: "Success Create product",
-		Data:    input,
+		Data:    createdProduct, 
 	})
 }
 
