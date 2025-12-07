@@ -1,11 +1,6 @@
-# Project Name
+# Just Sruput
 
-> Brief description of what this service does and its purpose in the system architecture
-
-[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
-[![Gin Framework](https://img.shields.io/badge/Gin-v1.9+-00ADD8?style=flat)](https://gin-gonic.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-316192?style=flat&logo=postgresql)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Redis-7+-DC382D?style=flat&logo=redis)](https://redis.io/)
+>This service is a backend system built using Golang and the Gin Web Framework to manage core operations of a Coffee Shop application. It provides a set of secure and scalable RESTful APIs that handle essential business processes, including user authentication, product management, cart operations, order transactions, payment methods, ratings, and history tracking.
 
 ## Table of Contents
 
@@ -24,8 +19,7 @@
 - [License](#license)
 
 ## Overview
-
-This is a production-grade RESTful API service built with Go (Golang) using the Gin web framework. The service provides [brief description of main functionality] and is designed with scalability, maintainability, and performance in mind.
+This is a production-grade RESTful API service built with Go (Golang) using the Gin web framework. The service provides a complete backend system for a Coffee Shop application, including user authentication, product management, shopping cart operations, order processing, payment methods, ratings, and transaction history. It is designed with scalability, maintainability, and high performance in mind, serving as the core API layer that connects the frontend clients with the database.
 
 ## Tech Stack
 
@@ -111,6 +105,219 @@ air
 
 The API will be available at `http://localhost:8080`
 
+## ERD Diagram
+```mermaid
+erDiagram
+
+    profile ||--|| users : "profile_id"
+    users ||--o{ carts : "users_id"
+    users ||--o{ transactions : "users_id"
+    users ||--o{ ratings : "users_id"
+
+    category_products ||--o{ products : "category_products_id"
+    discounts ||--o{ products : "discounts_id"
+
+    products ||--o{ product_images : "products_id"
+    products ||--o{ product_sizes : "products_id"
+    products ||--o{ product_variants : "products_id"
+    products ||--o{ carts : "products_id"
+    products ||--o{ transaction_items : "products_id"
+    products ||--o{ ratings : "products_id"
+
+    size_products ||--o{ product_sizes : "size_products_id"
+    variant_products ||--o{ product_variants : "variant_products_id"
+
+    product_sizes ||--o{ carts : "product_sizes_id"
+    product_sizes ||--o{ transaction_items : "product_sizes_id"
+
+    product_variants ||--o{ carts : "product_variants_id"
+    product_variants ||--o{ transaction_items : "product_variants_id"
+
+    deliverys ||--o{ transactions : "deliverys_id"
+    payment_methods ||--o{ transactions : "payment_methods_id"
+    status_transactions ||--o{ transactions : "status_transactions_id"
+    taxes ||--o{ transactions : "taxes_id"
+
+    transactions ||--o{ transaction_items : "transactions_id"
+    transactions ||--o{ ratings : "transactions_id"
+
+    profile {
+        int id
+        text pic
+        varchar phone
+        text address
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    users {
+        int id
+        varchar fullname
+        varchar email
+        varchar password
+        varchar role
+        int profile_id
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    category_products {
+        int id
+        varchar name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    discounts {
+        int id
+        varchar name
+        decimal discount_percentage
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    products {
+        int id
+        int discounts_id
+        varchar name
+        decimal price
+        text description
+        int stock
+        boolean is_flashsale
+        boolean is_favorite_product
+        int category_products_id
+        int ratings
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    product_images {
+        int id
+        text image
+        int products_id
+        boolean is_primary
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    size_products {
+        int id
+        varchar name
+        decimal additional_costs
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    variant_products {
+        int id
+        varchar name
+        decimal additional_costs
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    product_sizes {
+        int id
+        int products_id
+        int size_products_id
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    product_variants {
+        int id
+        int products_id
+        int variant_products_id
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    taxes {
+        int id
+        varchar name
+        float tax
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    carts {
+        int id
+        int users_id
+        int products_id
+        int product_sizes_id
+        int product_variants_id
+        int quantity
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    deliverys {
+        int id
+        varchar name
+        decimal price
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    payment_methods {
+        int id
+        varchar name
+        text image_payment
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    status_transactions {
+        int id
+        varchar status
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    transactions {
+        int id
+        int users_id
+        int deliverys_id
+        int payment_methods_id
+        int status_transactions_id
+        int taxes_id
+        varchar name_user
+        text address_user
+        varchar phone_user
+        varchar email_user
+        decimal subtotal
+        decimal tax_amount
+        decimal total
+        varchar invoice_num
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    transaction_items {
+        int id
+        int transactions_id
+        int products_id
+        int quantity
+        decimal price_at_time
+        decimal discount_at_time
+        int product_sizes_id
+        int product_variants_id
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    ratings {
+        int id
+        int users_id
+        int products_id
+        int transactions_id
+        int rating
+        text review
+        timestamp created_at
+        timestamp updated_at
+    }
+
+```
 ## API Documentation
 
 Once the application is running, you can access the API documentation at:
