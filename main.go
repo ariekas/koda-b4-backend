@@ -1,9 +1,9 @@
 package main
 
 import (
-	"back-end-coffeShop/controller"
-	"back-end-coffeShop/lib/middelware"
-	"back-end-coffeShop/routes"
+	"back-end-coffeShop/internal/controller"
+	"back-end-coffeShop/internal/middelware"
+	"back-end-coffeShop/internal/routes"
 	"fmt"
 
 	_ "back-end-coffeShop/docs"
@@ -13,10 +13,6 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description Type "Bearer" followed by a space and JWT token. Example: "Bearer eyJhbGciOiJIUzI1NiIsInR5..."
 func main() {
 	defer func() {
 		r := recover()
@@ -31,7 +27,6 @@ func main() {
 	r.MaxMultipartMemory = 8 << 20
 	r.Use(middelware.CrossMiddelware())
 	r.Use(middelware.AllowPreflight)
-	
 	routes.MainRoutes(r, connectDb)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

@@ -1,0 +1,44 @@
+package handler
+
+import (
+	"back-end-coffeShop/internal/controller"
+	"back-end-coffeShop/internal/models"
+	"back-end-coffeShop/internal/routes"
+	"context"
+	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+var (
+	App  *gin.Engine
+	pool *pgxpool.Pool
+)
+
+func init() {
+	App = gin.New()
+	App.Use(gin.Recovery(), gin.Logger())
+
+	pool = controller.ConnectDB()
+
+	App.GET("/", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, models.Response{
+			Success: true,
+			Message: "Backend is running well 🚀",
+		})
+	})
+
+	routes.MainRoutes(App, pool)
+}
+
+func Handler(w http.ResponseWriter, r *http.Request) {
+
+	if err := pool.Ping(context.Background()); err != nil {
+		fmt.Println("DB disconnected, reconnecting...")
+		pool = controller.ConnectDB()
+	}
+
+	App.ServeHTTP(w, r)
+}

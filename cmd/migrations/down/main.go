@@ -1,7 +1,7 @@
 package main
 
 import (
-	"back-end-coffeShop/controller"
+	"back-end-coffeShop/internal/controller"
 	"context"
 	"fmt"
 	"log"
