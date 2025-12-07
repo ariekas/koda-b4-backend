@@ -169,7 +169,11 @@ func (tc TransactionsController) CreateTransaction(ctx *gin.Context) {
 
 	total := subtotal + taxAmount + deliveryPrice
 
-	invoice := fmt.Sprintf("INV-%s-%d", time.Now().Format("20060102"), time.Now().Unix())
+	invoice := fmt.Sprintf(
+		"INV-%d-%s",
+		userID,
+		time.Now().Format("20060102"),
+	)
 
 	tx, err := tc.Pool.Begin(context.Background())
 	if err != nil {
