@@ -1,7 +1,0 @@
-CREATE TABLE taxes (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR NOT NULL,
-    tax FLOAT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
